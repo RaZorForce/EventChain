@@ -10,10 +10,10 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from math import floor
 from datahandler import DataHandler
-from event import FillEvent, OrderEvent, SignalEvent
+from event import FillEvent, OrderEvent, SignalEvent, MarketEvent
 
 from performance import create_sharpe_ratio, create_drawdowns
-
+from icecream import ic
 class Portfolio(object):
     """
     The Portfolio class handles the positions and market
@@ -118,7 +118,7 @@ class NaivePortfolio(Portfolio):
         d['total'] = self.initial_capital
         return d
 
-    def update_timeindex(self, event: Queue) -> None:
+    def update_timeindex(self, event: MarketEvent) -> None:
         """
         Adds a new record to the positions matrix for the current
         market data bar. This reflects the PREVIOUS bar, i.e. all
@@ -131,25 +131,22 @@ class NaivePortfolio(Portfolio):
             bars[s] = self.bars.get_latest_bars(s, N=1)
 
         # Update positions
-        dpos = dict( (s, 0) for s in self.symbol_list )
-        dpos['datetime'] = bars[self.symbol_list[0]][0][1]
-
-        for s in self.symbol_list:
-            dpos[s] = self.current_positions[s]
+        dpos = dict( (s, self.current_positions[s]) for s in self.symbol_list )
+        dpos['datetime'] = bars[s][0]["Date"]
 
         # Append the current positions
         self.all_positions.append(dpos)
-
+        #ic(self.all_positions)
         # Update holdings
-        dhol = dict( (s, 0) for s in self.symbol_list )
-        dhol['datetime'] = bars[self.symbol_list[0]][0][1]
+        dhol = dict( (s, self.current_holdings) for s in self.symbol_list )
+        dhol['datetime'] = bars[self.symbol_list[0]][0]["Date"]
         dhol['cash'] = self.current_holdings['cash']
         dhol['commission'] = self.current_holdings['commission']
         dhol['total'] = self.current_holdings['cash']
 
         for s in self.symbol_list:
             # Approximation to the real value
-            market_value = self.current_positions[s] * bars[s][0][5]
+            market_value = self.current_positions[s] * bars[s][0]["Close"]
             dhol[s] = market_value
             dhol['total'] += market_value
 
