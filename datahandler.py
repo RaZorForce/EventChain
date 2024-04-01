@@ -8,6 +8,7 @@ from queue import Queue
 from abc import ABCMeta, abstractmethod
 from typing import Generator, Tuple
 from event import MarketEvent
+from icecream import ic
 
 class DataHandler(object):
     """
@@ -79,12 +80,13 @@ class HistoricCSVDataHandler(DataHandler):
         taken from Yahoo. Thus its format will be respected.
         """
         comb_index = None
+
         for s in self.symbol_list:
             # Load the CSV file with no header information, indexed on date
             self.symbol_data[s] = pd.read_csv(
                 os.path.join(self.csv_dir, s+'_Daily_Bars.csv'),
                 header=0, index_col=0, parse_dates=True,
-                names=['datetime', 'open', 'high','low', 'close', 'volume']
+                names=['datetime', 'Open', 'High','Low', 'Close', 'Volume']
             )
             self.symbol_data[s].sort_index(inplace=True)
 
@@ -95,27 +97,26 @@ class HistoricCSVDataHandler(DataHandler):
                 comb_index.union(self.symbol_data[s].index)
 
             # Set the latest symbol_data to None
-            self.latest_symbol_data[s] = []
+            self.latest_symbol_data[s] = pd.DataFrame()
 
-        for s in self.symbol_list:
-            self.symbol_data[s]["returns"] = self.symbol_data[s]["close"].pct_change().dropna()
-            # Reindex the dataframes
-            self.symbol_data[s] = self.symbol_data[s].reindex(index=comb_index, method='pad').iterrows()
+            self.symbol_data[s] = self.symbol_data[s].iterrows()
+
+# =============================================================================
+#         for s in self.symbol_list:
+#             symbol_data[s]["returns"] = symbol_data[s]["close"].pct_change().dropna()
+#             # Reindex the dataframes
+#             symbol_data[s] = symbol_data[s].reindex(index=comb_index, method='pad').iterrows()
+# =============================================================================
 
     def _get_new_bar(self, symbol: str) -> Generator:
         """
         Returns the latest bar from the data feed as a tuple of
         (symbol, datetime, open, low, high, close, volume).
-
-        b: Tuple
-        b[0]: Timestamp  /  b[1]: Series
-        b[1][0]: open    /  b[1][1]: high
-        b[1][2]: low     /  b[1][3]: close
-        b[1][4]: volume  /  b[1][5]: returns
         """
-        for b in self.symbol_data[symbol]:
-            yield tuple([symbol, b[0], b[1].iloc[0], b[1].iloc[1],
-                         b[1].iloc[2], b[1].iloc[3], b[1].iloc[4]])
+        for index, row in self.symbol_data[symbol]:
+            yield{"Date": index, "Open": row["Open"], "High": row["High"],
+                   "Low": row["Low"], "Close": row["Close"], "Volume": row["Volume"]}
+
 
     def get_latest_bars(self, symbol: str, N: int =1) -> list:
         """
@@ -123,12 +124,11 @@ class HistoricCSVDataHandler(DataHandler):
         available.
         """
         try:
-            bars_list = self.latest_symbol_data[symbol]
+            return self.latest_symbol_data[symbol].iloc[-N:]
         except KeyError:
             print (f"the symbol {symbol} is not available in the historical data set.")
-            return []
-        else:
-            return bars_list[-N:]
+            return None
+
 
     def update_bars(self) -> None:
         """
@@ -137,10 +137,14 @@ class HistoricCSVDataHandler(DataHandler):
         """
         for s in self.symbol_list:
             try:
-                bar: Tuple = next(self._get_new_bar(s))
+                bar: dict = next(self._get_new_bar(s))
+
+                if bar is not None:
+                    bar_df = pd.DataFrame(bar,index=[0]).set_index('Date')
+                    self.latest_symbol_data[s] = pd.concat([self.latest_symbol_data[s], bar_df])
+
             except StopIteration:
                 self.continue_backtest = False
-            else:
-                if bar is not None:
-                    self.latest_symbol_data[s].append(bar)
+
+        #ic(self.latest_symbol_data)
         self.events.put(MarketEvent())
