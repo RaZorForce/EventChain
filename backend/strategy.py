@@ -137,7 +137,7 @@ class doubleTop(Strategy):
         """
         if event.type == 'MARKET':
             for s in self.symbol_list:
-                #bars = self.bars.get_latest_bars(s, 1)
+                bars = self.bars.get_latest_bars(s, 1)
                 #ic(self.latest_symbol_data[s])
                 # get min max values and dates
                 minima, maxima = self.get_min_max(self.latest_symbol_data[s])
@@ -153,16 +153,16 @@ class doubleTop(Strategy):
                     #collect the pattern price points
                     pattern_data = self.get_PriceData(self.latest_symbol_data[s], pattern_dates)
                     if len(pattern_data) != 0:
-                        self.pattern_data[s] = self.pattern_data[s].join(pattern_data)
+                        self.pattern_data[s] = pattern_data
 
-                    if self.pattern_data[s][self.pattern_data[s]['is_detected'] == True].empty:
+                    if self.pattern_data[s]['is_detected'].any():
                         self.pattern_state[s] = "CONFIRMING"
 
                 elif self.pattern_state[s] == "CONFIRMING":
                     # Store the information for confirmation with the rest of the pattern data
                     self.get_ConfDate(self.latest_symbol_data[s], self.pattern_data[s])
 
-                    if self.pattern_data[s]['is_confirmed'] == True:
+                    if self.pattern_data[s]['is_confirmed'].any():
                         self.pattern_state[s] = "BUYING"
 
                 elif self.pattern_state[s] == "BUYING":

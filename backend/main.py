@@ -13,7 +13,7 @@ from execution import ExecutionHandler, SimulatedExecutionHandler
 csv_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "Historical", "Daily")
 
 #filenames = glob.glob("*_Daily_Bars.csv")
-filenames = ["ALEC_Daily_Bars.csv", "AMRN_Daily_Bars.csv"]
+filenames = ["HUMA_Daily_Bars.csv"]#, "AMRN_Daily_Bars.csv"]
 symbol_list = [filename.split("_")[0] for filename in filenames]
 
 # Declare the components with respective parameters
@@ -21,7 +21,7 @@ eventsQ = queue.Queue()
 
 # Initialize objects
 bars = HistoricCSVDataHandler(eventsQ, csv_dir, symbol_list)
-strategy = BuyAndHoldStrategy(bars,eventsQ)
+strategy = doubleTop(bars,eventsQ)
 portfolio = NaivePortfolio(bars, eventsQ, "20230215")
 broker = SimulatedExecutionHandler(eventsQ)
 
@@ -37,9 +37,6 @@ while True:
     while True:
         try:
             event = eventsQ.get(False)
-            if event.type != "MARKET":
-                print(f"queue size {eventsQ.qsize()} with event {event.type}")
-                print(f"queue has {eventsQ.unfinished_tasks} unfinished tasks")
         except queue.Empty:
             break
         else:
@@ -50,14 +47,17 @@ while True:
                     eventsQ.task_done()
 
                 elif event.type == 'SIGNAL':
+                    print(f"[SIGNAL] {event.signal_type} signal for {event.symbol} | Queue: {eventsQ.qsize()} remaining")
                     portfolio.update_signal(event)
                     eventsQ.task_done()
 
                 elif event.type == 'ORDER':
+                    print(f"[ORDER]  {event.direction} {event.quantity} shares of {event.symbol} | Queue: {eventsQ.qsize()} remaining")
                     broker.execute_order(event)
                     eventsQ.task_done()
 
                 elif event.type == 'FILL':
+                    print(f"[FILL]   {event.direction} {event.quantity} shares of {event.symbol} @ ${event.fill_cost:.2f} | Queue: {eventsQ.qsize()} remaining")
                     portfolio.update_fill(event)
                     eventsQ.task_done()
 
