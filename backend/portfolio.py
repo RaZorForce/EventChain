@@ -63,6 +63,7 @@ class NaivePortfolio(Portfolio):
         self.bars: DataHandler = bars
         self.events: Queue = events
         self.symbol_list:list = self.bars.symbol_list
+        self.latest_symbol_data: dict = bars.latest_symbol_data
         self.start_date = start_date
         self.initial_capital:float = initial_capital
 
@@ -128,25 +129,26 @@ class NaivePortfolio(Portfolio):
         """
         bars: dict = {}
         for s in self.symbol_list:
-            bars[s] = self.bars.get_latest_bars(s, N=1)
+            bars[s] = self.latest_symbol_data[s]
+
 
         # Update positions
         dpos = dict( (s, self.current_positions[s]) for s in self.symbol_list )
-        dpos['datetime'] = bars[s][0]["Date"]
+        dpos['datetime'] = self.latest_symbol_data[s].index[-1]
 
         # Append the current positions
         self.all_positions.append(dpos)
         #ic(self.all_positions)
         # Update holdings
         dhol = dict( (s, self.current_holdings) for s in self.symbol_list )
-        dhol['datetime'] = bars[self.symbol_list[0]][0]["Date"]
+        dhol['datetime'] = self.latest_symbol_data[s].index[-1]
         dhol['cash'] = self.current_holdings['cash']
         dhol['commission'] = self.current_holdings['commission']
         dhol['total'] = self.current_holdings['cash']
 
         for s in self.symbol_list:
             # Approximation to the real value
-            market_value = self.current_positions[s] * bars[s][0]["Close"]
+            market_value = self.current_positions[s] * self.latest_symbol_data[s]["Close"][-1]
             dhol[s] = market_value
             dhol['total'] += market_value
 
@@ -187,7 +189,7 @@ class NaivePortfolio(Portfolio):
             fill_dir = -1
 
         # Update holdings list with new quantities
-        fill_cost = self.bars.get_latest_bars(fill.symbol)[0][5]  # Close price
+        fill_cost = self.latest_symbol_data[fill.symbol]["Close"][-1]  # Last Close price
         cost = fill_dir * fill_cost * fill.quantity
         self.current_holdings[fill.symbol] += cost
         self.current_holdings['commission'] += fill.commission

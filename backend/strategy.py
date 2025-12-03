@@ -61,6 +61,7 @@ class BuyAndHoldStrategy(Strategy):
         """
         self.bars: DataHandler = bars
         self.symbol_list: list = bars.symbol_list
+        self.latest_symbol_data: dict = bars.latest_symbol_data
         self.events: Queue = events
 
         # Once buy & hold signal is given, these are set to True
@@ -89,10 +90,10 @@ class BuyAndHoldStrategy(Strategy):
         if event.type == 'MARKET':
             for s in self.symbol_list:
                 bars: list = self.bars.get_latest_bars(s, N=2)
-                if bars is not None and bars != []:
+                if bars is not None and len(bars) > 0:
                     if self.bought[s] == False:
                         # (Symbol, Datetime, Type = LONG, SHORT or EXIT)
-                        signal: SignalEvent = SignalEvent(bars[0][0], bars[0][1], 'LONG')
+                        signal: SignalEvent = SignalEvent(s, bars.index[0], 'LONG')
                         self.events.put(signal)
                         self.bought[s] = True
 

@@ -10,10 +10,10 @@ from portfolio import Portfolio, NaivePortfolio
 from execution import ExecutionHandler, SimulatedExecutionHandler
 
 # Collect all filenames in current directory
-csv_dir = "C:\\X\\Workspaces\\stock-trading-bot\\EventChainTrader\\data\\Historical\\Daily"
+csv_dir = "C:\\X\\Workspaces\\ALGO\\Data\\Historical\\Daily"
 os.chdir(csv_dir)
 #filenames = glob.glob("*_Daily_Bars.csv")
-filenames = ["ADPT_Daily_Bars.csv", "ALEC_Daily_Bars.csv","AMRN_Daily_Bars.csv"]
+filenames = ["HUMA_Daily_Bars.csv", "ALEC_Daily_Bars.csv"]
 symbol_list = [filename.split("_")[0] for filename in filenames]
 
 # Declare the components with respective parameters
