@@ -153,7 +153,7 @@ class doubleTop(Strategy):
                     #collect the pattern price points
                     pattern_data = self.get_PriceData(self.latest_symbol_data[s], pattern_dates)
                     if len(pattern_data) != 0:
-                        self.pattern_data[s] = pattern_data
+                        self.pattern_data[s] = pd.concat([self.pattern_data[s], pattern_data], ignore_index=True)
 
                     if self.pattern_data[s]['is_detected'].any():
                         self.pattern_state[s] = "CONFIRMING"
