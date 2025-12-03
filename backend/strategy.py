@@ -166,7 +166,13 @@ class doubleTop(Strategy):
                         self.pattern_state[s] = "BUYING"
 
                 elif self.pattern_state[s] == "BUYING":
-                    X=0
+                    if not self.bought[s]:
+                        # Generate SHORT signal for double-top pattern
+                        bars = self.bars.get_latest_bars(s, N=1)
+                        signal = SignalEvent(s, bars.index[0], 'SHORT')
+                        self.events.put(signal)
+                        self.bought[s] = True
+                        print(f"[doubleTop] Generated SHORT signal for {s}")
 
 
 
@@ -185,8 +191,8 @@ class doubleTop(Strategy):
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
         # Detect peaks (highs) and valleys (lows) using PeakUtils
-        peaks_idx = peakutils.indexes(df['High'], thres=0.60, min_dist=window)
-        valleys_idx = peakutils.indexes(-df['Low'], thres=0.60, min_dist=window)
+        #peaks_idx = peakutils.indexes(df['High'], thres=0.60, min_dist=window)
+        #valleys_idx = peakutils.indexes(-df['Low'], thres=0.60, min_dist=window)
 
         peaks_idx_high, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
         valleys_idx_low,_ = find_peaks(-df['Low'], height=None, prominence=0.5, distance=10)
