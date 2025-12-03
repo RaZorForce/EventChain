@@ -10,10 +10,10 @@ from portfolio import Portfolio, NaivePortfolio
 from execution import ExecutionHandler, SimulatedExecutionHandler
 
 # Collect all filenames in current directory
-csv_dir = "C:\\X\\Workspaces\\ALGO\\Data\\Historical\\Daily"
-os.chdir(csv_dir)
+csv_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "Historical", "Daily")
+
 #filenames = glob.glob("*_Daily_Bars.csv")
-filenames = ["HUMA_Daily_Bars.csv", "ALEC_Daily_Bars.csv"]
+filenames = ["ALEC_Daily_Bars.csv", "AMRN_Daily_Bars.csv"]
 symbol_list = [filename.split("_")[0] for filename in filenames]
 
 # Declare the components with respective parameters
@@ -61,6 +61,13 @@ while True:
                     portfolio.update_fill(event)
                     eventsQ.task_done()
 
-    x= 0
-# 10-Minute heartbeat
-    #time.sleep(2)
+# Generate performance metrics and display results
+print("\n" + "="*60)
+print(" "*20 + "BACKTEST RESULTS")
+print("="*60)
+
+portfolio.create_equity_curve_dataframe()
+stats = portfolio.output_summary_stats()
+
+for stat in stats:
+    print(stat)

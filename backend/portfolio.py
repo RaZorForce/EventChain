@@ -148,7 +148,7 @@ class NaivePortfolio(Portfolio):
 
         for s in self.symbol_list:
             # Approximation to the real value
-            market_value = self.current_positions[s] * self.latest_symbol_data[s]["Close"][-1]
+            market_value = self.current_positions[s] * self.latest_symbol_data[s]["Close"].iloc[-1]
             dhol[s] = market_value
             dhol['total'] += market_value
 
@@ -189,7 +189,7 @@ class NaivePortfolio(Portfolio):
             fill_dir = -1
 
         # Update holdings list with new quantities
-        fill_cost = self.latest_symbol_data[fill.symbol]["Close"][-1]  # Last Close price
+        fill_cost = self.latest_symbol_data[fill.symbol]["Close"].iloc[-1]  # Last Close price
         cost = fill_dir * fill_cost * fill.quantity
         self.current_holdings[fill.symbol] += cost
         self.current_holdings['commission'] += fill.commission
@@ -261,7 +261,7 @@ class NaivePortfolio(Portfolio):
         Creates a list of summary statistics for the portfolio such
         as Sharpe Ratio and drawdown information.
         """
-        total_return = self.equity_curve['equity_curve'][-1]
+        total_return = self.equity_curve['equity_curve'].iloc[-1]
         returns = self.equity_curve['returns']
         pnl = self.equity_curve['equity_curve']
 
