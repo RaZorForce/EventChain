@@ -1,2 +1,22 @@
-__pycache__
-docs
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+
+# Logs
+*.log
+
+# Config
+config.ini
+secrets.py
+.env.local
