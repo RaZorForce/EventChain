@@ -39,10 +39,10 @@ class TradingEngine:
 
     def run(self):
         """Main event loop - universal for backtest and live."""
-        while self.bars.continue_backtest:
+        while self.bars.continue_backtest: # <-- Outer loop (heartbeat)
             self.bars.update_bars()
 
-            while True:
+            while True: # <-- Inner loop (event processing)
                 try:
                     event = self.events.get(False)
                 except queue.Empty:
