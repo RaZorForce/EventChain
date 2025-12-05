@@ -3,10 +3,9 @@
 import os
 import queue
 
-from src.config import SYMBOLS, CSV_DIR, START_DATE, INITIAL_CAPITAL
+from src.config import SYMBOLS, CSV_DIR, START_DATE, INITIAL_CAPITAL, STRATEGY_NAME, STRATEGY_REGISTRY
 from src.engine import TradingEngine
 from src.bars import HistoricCSVDataHandler
-from src.strategy import doubleTop
 from src.portfolio import NaivePortfolio
 from src.broker import SimulatedExecutionHandler
 
@@ -21,7 +20,12 @@ if __name__ == "__main__":
 
     # Initialize components
     bars = HistoricCSVDataHandler(events, csv_dir, SYMBOLS)
-    strategy = doubleTop(bars, events)
+
+    # Get strategy class from registry
+    StrategyClass = STRATEGY_REGISTRY[STRATEGY_NAME]
+    strategy = StrategyClass(bars, events)
+    print(f"[main] Using strategy: {strategy.name}")
+
     portfolio = NaivePortfolio(bars, events, START_DATE, INITIAL_CAPITAL)
     broker = SimulatedExecutionHandler(events)
 

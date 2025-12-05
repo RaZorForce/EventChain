@@ -110,10 +110,17 @@ class doubleTop(Strategy):
 
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        #use the argrelextrema to compute the local minima and maxima points
+        #local_min = argrelextrema(df.iloc[:-argrel_window]['Low'].values,
+        #                      np.less, order=argrel_window)[0]
+        #local_max = argrelextrema(df.iloc[:-argrel_window]['High'].values,
+        #                      np.greater, order=argrel_window)[0]
+
         # Detect peaks (highs) and valleys (lows) using PeakUtils
         #peaks_idx = peakutils.indexes(df['High'], thres=0.60, min_dist=window)
         #valleys_idx = peakutils.indexes(-df['Low'], thres=0.60, min_dist=window)
 
+        # Detect peaks (highs) and valleys (lows) using scipy.signal.find_peaks
         peaks_idx_high, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
         valleys_idx_low,_ = find_peaks(-df['Low'], height=None, prominence=0.5, distance=10)
 

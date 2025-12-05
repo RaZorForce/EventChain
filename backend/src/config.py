@@ -36,3 +36,25 @@ SYMBOLS = _config.get("symbols", [])
 CSV_DIR = _config.get("data", {}).get("csv_dir", "data/Historical/Daily")
 START_DATE = _config.get("data", {}).get("start_date", "20230215")
 INITIAL_CAPITAL = float(_config.get("portfolio", {}).get("initial_capital", 100000.0))
+STRATEGY_NAME = _config.get("strategy", "double_top")
+
+# Strategy registry - import here to avoid circular imports
+from src.strategy import (
+    doubleTop,
+    doubleBottom,
+    tripleTop,
+    tripleBottom,
+    headAndShoulders,
+    headAndShouldersInverse,
+    BuyAndHoldStrategy,
+)
+
+STRATEGY_REGISTRY = {
+    "double_top": doubleTop,
+    "double_bottom": doubleBottom,
+    "triple_top": tripleTop,
+    "triple_bottom": tripleBottom,
+    "head_and_shoulders": headAndShoulders,
+    "head_and_shoulders_inverse": headAndShouldersInverse,
+    "buy_and_hold": BuyAndHoldStrategy,
+}

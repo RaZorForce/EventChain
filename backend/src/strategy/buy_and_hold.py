@@ -27,6 +27,7 @@ class BuyAndHoldStrategy(Strategy):
         bars - The DataHandler object that provides bar information
         events - The Event Queue object.
         """
+        self.name = "Buy and Hold"
         self.bars: DataHandler = bars
         self.symbol_list: list = bars.symbol_list
         self.latest_symbol_data: dict = bars.latest_symbol_data
