@@ -4,6 +4,7 @@ from src.broker import ExecutionHandler, SimulatedExecutionHandler, IBExecutionH
 from src.strategy import Strategy, BuyAndHoldStrategy, doubleTop
 from src.portfolio import Portfolio, NaivePortfolio
 from src.performance import create_sharpe_ratio, create_drawdowns
+from src.engine import TradingEngine
 
 __all__ = [
     # Events
@@ -18,4 +19,6 @@ __all__ = [
     'Portfolio', 'NaivePortfolio',
     # Performance
     'create_sharpe_ratio', 'create_drawdowns',
+    # Engine
+    'TradingEngine',
 ]

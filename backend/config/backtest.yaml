@@ -1,0 +1,14 @@
+# Backtest Configuration
+
+symbols:
+  - HUMA
+  - AMRN
+  - ADPT
+  - ALEC
+
+data:
+  csv_dir: data/Historical/Daily
+  start_date: "20230215"
+
+portfolio:
+  initial_capital: 100000.0

@@ -1,73 +1,31 @@
 # -*- coding: utf-8 -*-
-import time
-import queue
 
 import os
-import glob
+import queue
+
+from src.config import SYMBOLS, CSV_DIR, START_DATE, INITIAL_CAPITAL
+from src.engine import TradingEngine
 from src.bars import HistoricCSVDataHandler
-from src.strategy import Strategy, BuyAndHoldStrategy, doubleTop
-from src.portfolio import Portfolio, NaivePortfolio
-from src.broker import ExecutionHandler, SimulatedExecutionHandler
-
-# Collect all filenames in current directory
-csv_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "Historical", "Daily")
-
-#filenames = glob.glob("*_Daily_Bars.csv")
-filenames = ["HUMA_Daily_Bars.csv", "AMRN_Daily_Bars.csv","ADPT_Daily_Bars.csv", "ALEC_Daily_Bars.csv"]
-symbol_list = [filename.split("_")[0] for filename in filenames]
-
-# Declare the components with respective parameters
-eventsQ = queue.Queue()
-
-# Initialize objects
-bars = HistoricCSVDataHandler(eventsQ, csv_dir, symbol_list)
-strategy = doubleTop(bars,eventsQ)
-portfolio = NaivePortfolio(bars, eventsQ, "20230215")
-broker = SimulatedExecutionHandler(eventsQ)
+from src.strategy import doubleTop
+from src.portfolio import NaivePortfolio
+from src.broker import SimulatedExecutionHandler
 
 
-while True:
-    # Update the bars (specific backtest code, as opposed to live trading)
-    if bars.continue_backtest == True:
-        bars.update_bars()
-    else:
-        break
+if __name__ == "__main__":
+    # Resolve csv_dir relative to backend/
+    backend_root = os.path.dirname(os.path.dirname(__file__))
+    csv_dir = os.path.join(backend_root, CSV_DIR)
 
-    # Handle the events
-    while True:
-        try:
-            event = eventsQ.get(False)
-        except queue.Empty:
-            break
-        else:
-            if event is not None:
-                if event.type == 'MARKET':
-                    strategy.calculate_signals(event)
-                    portfolio.update_timeindex(event)
-                    eventsQ.task_done()
+    # Create event queue
+    events = queue.Queue()
 
-                elif event.type == 'SIGNAL':
-                    print(f"[SIGNAL] {event.signal_type} signal for {event.symbol} | Queue: {eventsQ.qsize()} remaining")
-                    portfolio.update_signal(event)
-                    eventsQ.task_done()
+    # Initialize components
+    bars = HistoricCSVDataHandler(events, csv_dir, SYMBOLS)
+    strategy = doubleTop(bars, events)
+    portfolio = NaivePortfolio(bars, events, START_DATE, INITIAL_CAPITAL)
+    broker = SimulatedExecutionHandler(events)
 
-                elif event.type == 'ORDER':
-                    print(f"[ORDER]  {event.direction} {event.quantity} shares of {event.symbol} | Queue: {eventsQ.qsize()} remaining")
-                    broker.execute_order(event)
-                    eventsQ.task_done()
-
-                elif event.type == 'FILL':
-                    print(f"[FILL]   {event.direction} {event.quantity} shares of {event.symbol} @ ${event.fill_cost:.2f} | Queue: {eventsQ.qsize()} remaining")
-                    portfolio.update_fill(event)
-                    eventsQ.task_done()
-
-# Generate performance metrics and display results
-print("\n" + "="*60)
-print(" "*20 + "BACKTEST RESULTS")
-print("="*60)
-
-portfolio.create_equity_curve_dataframe()
-stats = portfolio.output_summary_stats()
-
-for stat in stats:
-    print(stat)
+    # Run engine
+    engine = TradingEngine(bars, strategy, portfolio, broker)
+    engine.run()
+    engine.print_summary()
