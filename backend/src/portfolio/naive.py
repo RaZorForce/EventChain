@@ -7,37 +7,15 @@ import numpy as np
 import pandas as pd
 from queue import Queue
 
-from abc import ABCMeta, abstractmethod
 from math import floor
-from datahandler import DataHandler
-from event import FillEvent, OrderEvent, SignalEvent, MarketEvent
 
-from performance import create_sharpe_ratio, create_drawdowns
+from src.bars import DataHandler
+from src.events import FillEvent, OrderEvent, SignalEvent, MarketEvent
+from src.performance import create_sharpe_ratio, create_drawdowns
 from icecream import ic
-class Portfolio(object):
-    """
-    The Portfolio class handles the positions and market
-    value of all instruments at a resolution of a "bar",
-    i.e. secondly, minutely, 5-min, 30-min, 60 min or EOD.
-    """
 
-    __metaclass__ = ABCMeta
+from .base import Portfolio
 
-    @abstractmethod
-    def update_signal(self, event: Queue):
-        """
-        Acts on a SignalEvent to generate new orders
-        based on the portfolio logic.
-        """
-        raise NotImplementedError("Should implement update_signal()")
-
-    @abstractmethod
-    def update_fill(self, event: Queue):
-        """
-        Updates the portfolio current positions and holdings
-        from a FillEvent.
-        """
-        raise NotImplementedError("Should implement update_fill()")
 
 class NaivePortfolio(Portfolio):
     """

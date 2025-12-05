@@ -4,13 +4,13 @@ import queue
 
 import os
 import glob
-from datahandler import HistoricCSVDataHandler
-from strategy import Strategy, BuyAndHoldStrategy, doubleTop
-from portfolio import Portfolio, NaivePortfolio
-from execution import ExecutionHandler, SimulatedExecutionHandler
+from src.bars import HistoricCSVDataHandler
+from src.strategy import Strategy, BuyAndHoldStrategy, doubleTop
+from src.portfolio import Portfolio, NaivePortfolio
+from src.broker import ExecutionHandler, SimulatedExecutionHandler
 
 # Collect all filenames in current directory
-csv_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "Historical", "Daily")
+csv_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "Historical", "Daily")
 
 #filenames = glob.glob("*_Daily_Bars.csv")
 filenames = ["HUMA_Daily_Bars.csv", "AMRN_Daily_Bars.csv","ADPT_Daily_Bars.csv", "ALEC_Daily_Bars.csv"]
