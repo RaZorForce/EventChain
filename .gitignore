@@ -20,3 +20,6 @@ venv/
 config.ini
 secrets.py
 .env.local
+
+# Keep example configs, ignore local overrides
+backend/config/local.yaml
