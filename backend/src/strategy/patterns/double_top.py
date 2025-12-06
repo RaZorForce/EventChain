@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from src.bars import DataHandler
 from src.events import SignalEvent
 
-from .base import Strategy
+from ..base import Strategy
 
 
 class doubleTop(Strategy):
@@ -64,6 +64,7 @@ class doubleTop(Strategy):
 
                 if len(minima) !=0 and len(maxima)!= 0:
                     if str(self.latest_symbol_data[s].index[-1]) == "2024-02-08 00:00:00":
+                        #pass
                         self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
 
                 if self.pattern_state[s] == "SCANNING":
@@ -106,7 +107,7 @@ class doubleTop(Strategy):
                mpf.make_addplot(max_points, type='scatter', color="red", marker='v', markersize=400)]
 
         # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
-        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7))
+        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=False)
 
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -188,6 +189,9 @@ class doubleTop(Strategy):
     def get_ConfDate(self, data: pd.DataFrame , pattern_data: pd.DataFrame):
         # If not empty
         if len(pattern_data) != 0:
+            if 'confirmation_date' not in pattern_data.columns:
+                pattern_data['confirmation_date'] = pd.NaT
+                pattern_data['confirmation_date'] = pattern_data['confirmation_date'].astype('object')
 
             for x in range(0, len(pattern_data)):
                 # store the data after second top in 'data_after_top2'
@@ -217,7 +221,7 @@ class doubleTop(Strategy):
             #pattern_data = pattern_data[(pattern_data['time_for_confirmation'] > 5) & ( pattern_data['time_for_confirmation'] < 30)]
         if len(pattern_data) != 0:
             pattern_data['is_confirmed'] = True
-        print(f"Double Top pattern confirmed {len(pattern_data)} times")
+            print(f"[doubleTop] Pattern confirmed! Found {len(pattern_data)} double top pattern(s)")
 
     def risk_Manager(self, pattern_data: pd.DataFrame):
         # If not empty

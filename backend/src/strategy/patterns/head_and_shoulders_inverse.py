@@ -5,11 +5,12 @@ import pandas as pd
 from queue import Queue
 from typing import Tuple
 from scipy.signal import find_peaks
+import mplfinance as mpf
 
 from src.bars import DataHandler
 from src.events import SignalEvent
 
-from .base import Strategy
+from ..base import Strategy
 
 
 class headAndShouldersInverse(Strategy):
@@ -86,6 +87,18 @@ class headAndShouldersInverse(Strategy):
                         self.bought[s] = True
                         print(f"[headAndShouldersInverse] Generated LONG signal for {s}")
 
+    def plot_min_max(self, data: pd.DataFrame, minima: float, maxima: float):
+        # List of data points that fall under the minima category
+        min_points = [minima.loc[k] if k in minima.index else np.nan for k in data.index]
+        max_points = [maxima.loc[k] if k in maxima.index else np.nan for k in data.index]
+
+        # Additional plots for marking the support and resistance levels
+        apd = [mpf.make_addplot(min_points, type='scatter', color="green",marker='^', markersize=400),
+               mpf.make_addplot(max_points, type='scatter', color="red", marker='v', markersize=400)]
+
+        # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
+        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=False)
+
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
         peaks_idx_high, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
         valleys_idx_low, _ = find_peaks(-df['Low'], height=None, prominence=0.5, distance=10)
@@ -146,6 +159,10 @@ class headAndShouldersInverse(Strategy):
         Check if price closed above neckline (confirmation of breakout).
         """
         if len(pattern_data) != 0:
+            if 'confirmation_date' not in pattern_data.columns:
+                pattern_data['confirmation_date'] = pd.NaT
+                pattern_data['confirmation_date'] = pattern_data['confirmation_date'].astype('object')
+
             for x in range(0, len(pattern_data)):
                 data_after_sh2 = data.loc[pattern_data.at[x, 'sh2_date']:]['Close']
 
@@ -166,9 +183,10 @@ class headAndShouldersInverse(Strategy):
             pattern_data.dropna(inplace=True)
             pattern_data.reset_index(drop=True, inplace=True)
 
+        # Only print when patterns are newly confirmed
         if len(pattern_data) != 0:
             pattern_data['is_confirmed'] = True
-        print(f"Inverse Head and Shoulders pattern confirmed {len(pattern_data)} times")
+            print(f"[headAndShouldersInverse] Pattern confirmed! Found {len(pattern_data)} inverse head and shoulders pattern(s)")
 
     def risk_Manager(self, pattern_data: pd.DataFrame):
         if len(pattern_data) != 0:

@@ -42,11 +42,19 @@ STRATEGY_NAME = _config.get("strategy", "double_top")
 from src.strategy import (
     doubleTop,
     doubleBottom,
+    tripleTop,
+    tripleBottom,
+    headAndShoulders,
+    headAndShouldersInverse,
     BuyAndHoldStrategy,
 )
 
 STRATEGY_REGISTRY = {
     "double_top": doubleTop,
     "double_bottom": doubleBottom,
+    "triple_top": tripleTop,
+    "triple_bottom": tripleBottom,
+    "head_and_shoulders": headAndShoulders,
+    "head_and_shoulders_inverse": headAndShouldersInverse,
     "buy_and_hold": BuyAndHoldStrategy,
 }

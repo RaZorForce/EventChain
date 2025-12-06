@@ -10,7 +10,7 @@ import mplfinance as mpf
 from src.bars import DataHandler
 from src.events import SignalEvent
 
-from .base import Strategy
+from ..base import Strategy
 
 
 class doubleBottom(Strategy):
@@ -84,7 +84,7 @@ class doubleBottom(Strategy):
                mpf.make_addplot(max_points, type='scatter', color="red", marker='v', markersize=400)]
 
         # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
-        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7))
+        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=False)
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
         peaks_idx_high, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
@@ -141,6 +141,10 @@ class doubleBottom(Strategy):
         Check if price closed above neckline (confirmation of breakout).
         """
         if len(pattern_data) != 0:
+            if 'confirmation_date' not in pattern_data.columns:
+                pattern_data['confirmation_date'] = pd.NaT
+                pattern_data['confirmation_date'] = pattern_data['confirmation_date'].astype('object')
+
             for x in range(0, len(pattern_data)):
                 data_after_bottom2 = data.loc[pattern_data.at[x, 'bottom2_date']:]['Close']
 
