@@ -7,11 +7,14 @@ import pandas as pd
 from queue import Queue
 from typing import Tuple
 from scipy.signal import find_peaks
+from icecream import ic
+import mplfinance as mpf
+import matplotlib.pyplot as plt
 
-from src.data_handler import DataHandler
-from src.engine.events import SignalEvent
+from src.bars import DataHandler
+from src.events import SignalEvent
 
-from ..base import Strategy
+from .base import Strategy
 
 
 class doubleTop(Strategy):

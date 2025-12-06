@@ -1,0 +1,215 @@
+# Event Bus Configuration
+# Defines event routing, consumers, providers, and priorities for the island architecture
+
+# Event Definitions
+events:
+  - name: MARKET
+    description: "New market data available"
+    provider: data_handler
+    consumers:
+      - strategy
+      - portfolio
+    priority: 1  # Highest priority - data drives everything
+    
+  - name: SIGNAL
+    description: "Trading signal generated"
+    provider: strategy
+    consumers:
+      - portfolio
+    priority: 2
+    
+  - name: ORDER
+    description: "Order execution request"
+    provider: portfolio
+    consumers:
+      - broker
+    priority: 3
+    
+  - name: EXECUTION
+    description: "Order execution result"
+    provider: broker
+    consumers:
+      - portfolio
+    priority: 4
+    
+  - name: PORTFOLIO_STATE
+    description: "Portfolio state update"
+    provider: portfolio
+    consumers:
+      - strategy
+      - engine  # For monitoring
+    priority: 5
+    
+  - name: SYSTEM
+    description: "System control events"
+    provider: engine
+    consumers:
+      - data_handler
+      - strategy
+      - portfolio
+      - broker
+    priority: 0  # Critical system events processed first
+
+# Island Definitions
+islands:
+  data_handler:
+    produces:
+      - MARKET
+    consumes:
+      - SYSTEM
+    description: "Provides market data feeds"
+    
+  strategy:
+    produces:
+      - SIGNAL
+    consumes:
+      - MARKET
+      - PORTFOLIO_STATE
+      - SYSTEM
+    description: "Generates trading signals"
+    
+  portfolio:
+    produces:
+      - ORDER
+      - PORTFOLIO_STATE
+    consumes:
+      - MARKET
+      - SIGNAL
+      - EXECUTION
+      - SYSTEM
+    description: "Manages positions and risk"
+    
+  broker:
+    produces:
+      - EXECUTION
+    consumes:
+      - ORDER
+      - SYSTEM
+    description: "Executes trades"
+    
+  engine:
+    produces:
+      - SYSTEM
+    consumes:
+      - PORTFOLIO_STATE  # For monitoring
+    description: "Orchestrates event flow"
+
+# Event Routing Rules
+routing:
+  # Synchronous vs Asynchronous
+  synchronous_events:
+    - MARKET
+    - SIGNAL
+    - ORDER
+    - EXECUTION
+  
+  asynchronous_events:
+    - PORTFOLIO_STATE
+    - SYSTEM
+  
+  # Event Queue Configuration
+  queue:
+    type: "priority"  # priority, fifo, lifo
+    max_size: 10000
+    overflow_strategy: "drop_oldest"  # drop_oldest, drop_newest, block
+  
+  # Event Filtering
+  filters:
+    - event: PORTFOLIO_STATE
+      condition: "only_on_change"  # Don't emit if state unchanged
+      
+    - event: SYSTEM
+      condition: "critical_only"  # Only emit critical system events in production
+
+# Event Handlers Configuration
+handlers:
+  # Retry configuration for failed event processing
+  retry:
+    enabled: true
+    max_attempts: 3
+    backoff_strategy: "exponential"  # linear, exponential, fixed
+    initial_delay_ms: 100
+    max_delay_ms: 5000
+  
+  # Timeout configuration
+  timeout:
+    MARKET: 1000  # ms
+    SIGNAL: 2000
+    ORDER: 5000
+    EXECUTION: 10000
+    PORTFOLIO_STATE: 1000
+    SYSTEM: 500
+  
+  # Dead letter queue for failed events
+  dead_letter_queue:
+    enabled: true
+    max_size: 1000
+    persist_to_disk: true
+    path: "logs/dead_letter_queue.log"
+
+# Monitoring & Logging
+monitoring:
+  # Event metrics
+  metrics:
+    enabled: true
+    track_latency: true
+    track_throughput: true
+    track_error_rate: true
+    
+  # Event logging
+  logging:
+    level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+    log_all_events: false
+    log_failed_events: true
+    log_slow_events: true
+    slow_threshold_ms: 1000
+    
+  # Alerting
+  alerts:
+    - condition: "event_processing_time > 5000ms"
+      action: "log_warning"
+      
+    - condition: "dead_letter_queue_size > 100"
+      action: "send_notification"
+      
+    - condition: "event_drop_rate > 0.01"
+      action: "halt_system"
+
+# Performance Tuning
+performance:
+  # Batch processing
+  batching:
+    enabled: false  # Enable for high-throughput scenarios
+    batch_size: 100
+    batch_timeout_ms: 50
+  
+  # Event compression
+  compression:
+    enabled: false
+    algorithm: "gzip"  # gzip, lz4, zstd
+  
+  # Parallel processing
+  parallel:
+    enabled: false  # Enable for multi-core processing
+    worker_threads: 4
+    per_island_workers:
+      strategy: 2  # Multiple strategies can run in parallel
+      portfolio: 1  # Single portfolio for consistency
+      broker: 1
+
+# Development vs Production
+profiles:
+  development:
+    monitoring.logging.level: "DEBUG"
+    monitoring.logging.log_all_events: true
+    handlers.retry.enabled: false
+    performance.parallel.enabled: false
+    
+  production:
+    monitoring.logging.level: "WARNING"
+    monitoring.logging.log_all_events: false
+    handlers.retry.enabled: true
+    performance.parallel.enabled: true
+    routing.filters:
+      - event: PORTFOLIO_STATE
+        condition: "only_on_change"
