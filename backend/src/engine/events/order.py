@@ -31,6 +31,7 @@ class OrderEvent(Event):
         if self.timestamp is None:
             object.__setattr__(self, 'timestamp', datetime.utcnow())
         if self.direction not in ['BUY', 'SELL']:
+            print(f"Invalid direction isssss: {self.direction}")
             raise ValueError(f"Invalid direction: {self.direction}")
         if self.quantity <= 0:
             raise ValueError(f"Invalid quantity: {self.quantity}")

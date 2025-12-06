@@ -5,7 +5,9 @@ import pandas as pd
 from queue import Queue
 from typing import Tuple
 from scipy.signal import find_peaks
+from icecream import ic
 import mplfinance as mpf
+import matplotlib.pyplot as plt
 
 from src.bars import DataHandler
 from src.events import SignalEvent
@@ -30,9 +32,10 @@ class tripleTop(Strategy):
 
         self.pattern_data: dict = {sym: False for sym in bars.symbol_list}
         for s in self.symbol_list:
-            self.pattern_data[s] = pd.DataFrame({'is_detected': [False],
-                                                 'is_confirmed': [False],
-                                                 'is_bought': [False]}, index=[0])
+            self.pattern_data[s] = pd.DataFrame({'is_detected': [False],'is_confirmed': [False],'is_bought': [False],\
+                                                 'top1_date': [np.nan], 'neck1_date': [np.nan], 'top2_date': [np.nan], 'neck2_date': [np.nan], 'top3_date': [np.nan],\
+                                                 'top1_price': [np.nan], 'neck1_price': [np.nan], 'top2_price': [np.nan], 'neck2_price': [np.nan], 'top3_price': [np.nan],\
+                                                 'confirmation_date': [pd.NaT], 'signal': [np.nan], 'time_for_confirmation': [np.nan]}, index=[0])
 
         self.found: dict = {sym: False for sym in bars.symbol_list}
         self.detected: dict = {sym: False for sym in bars.symbol_list}
@@ -50,20 +53,34 @@ class tripleTop(Strategy):
                 bars = self.bars.get_latest_bars(s, 1)
                 minima, maxima = self.get_min_max(self.latest_symbol_data[s])
 
+                if len(minima) !=0 and len(maxima)!= 0:
+                    if str(self.latest_symbol_data[s].index[-1]) == "2024-02-08 00:00:00":
+                        pass
+                        self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
+
                 if self.pattern_state[s] == "SCANNING":
                     pattern_dates = self.pattern_scanner(minima, maxima)
-                    pattern_data = self.get_PriceData(self.latest_symbol_data[s], pattern_dates)
-
-                    if len(pattern_data) != 0:
-                        self.pattern_data[s] = pd.concat([self.pattern_data[s], pattern_data], ignore_index=True)
-
+                    #collect the pattern price points
+                    price_data = self.get_PriceData(self.latest_symbol_data[s], pattern_dates)
+                    
+                    if len(price_data) != 0:
+                        # Initialize status columns for the new candidates
+                        price_data['is_confirmed'] = False
+                        price_data['is_bought'] = False
+                        price_data['signal'] = np.nan
+                        price_data['confirmation_date'] = pd.NaT
+                        
+                        # Replace the state with the found patterns
+                        self.pattern_data[s] = price_data
+                        
                     if self.pattern_data[s]['is_detected'].any():
                         self.pattern_state[s] = "CONFIRMING"
 
                 elif self.pattern_state[s] == "CONFIRMING":
-                    self.get_ConfDate(self.latest_symbol_data[s], self.pattern_data[s])
+                    # Store the information for confirmation with the rest of the pattern data
+                    self.pattern_data[s] = self.get_ConfDate(self.latest_symbol_data[s], self.pattern_data[s])
 
-                    if self.pattern_data[s]['is_confirmed'].any():
+                    if not self.pattern_data[s].empty and self.pattern_data[s]['is_confirmed'].any():
                         self.pattern_state[s] = "BUYING"
 
                 elif self.pattern_state[s] == "BUYING":
@@ -84,7 +101,8 @@ class tripleTop(Strategy):
                mpf.make_addplot(max_points, type='scatter', color="red", marker='v', markersize=400)]
 
         # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
-        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=False)
+        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=True)
+        plt.close()
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
         peaks_idx_high, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
@@ -118,10 +136,10 @@ class tripleTop(Strategy):
             # cond_3: Necklines are below the tops
             cond_3 = (B < A) and (B < C) and (D < E) and (D < C)
 
-            # cond_4: Tops within 1.5% of each other, necklines within 1.5%
-            cond_4 = (abs(A - C) <= np.mean([A, C]) * 0.015) and \
-                     (abs(C - E) <= np.mean([C, E]) * 0.015) and \
-                     (abs(B - D) <= np.mean([B, D]) * 0.015)
+            # cond_4: Tops within 15% of each other, necklines within 15% (relaxed from 1.5%)
+            cond_4 = (abs(A - C) <= np.mean([A, C]) * 0.15) and \
+                     (abs(C - E) <= np.mean([C, E]) * 0.15) and \
+                     (abs(B - D) <= np.mean([B, D]) * 0.15)
 
             if cond_1 and cond_2 and cond_3 and cond_4:
                 patterns.append([window.index[j] for j in range(0, len(window))])
@@ -158,21 +176,29 @@ class tripleTop(Strategy):
                         data_after_top3 < pattern_data.at[x, 'neck2_price']
                     ].index[0]
 
+                    pattern_data[['confirmation_date']] = pattern_data[['confirmation_date']].apply(pd.to_datetime, format='%Y-%m-%d')
+
                     pattern_data.at[x, 'time_for_confirmation'] = (
                         pattern_data.at[x, 'confirmation_date'] - pattern_data.at[x, 'top3_date']
                     ).days
 
                 except IndexError:
                     pattern_data.at[x, 'confirmation_date'] = np.nan
+                except:
+                    pattern_data.at[x, 'confirmation_date'] = np.nan
 
             pattern_data['signal'] = -1
-            pattern_data.dropna(inplace=True)
+            
+            # Set is_confirmed based on whether a confirmation date was found
+            pattern_data['is_confirmed'] = pd.notna(pattern_data['confirmation_date'])
+            
+            num_confirmed = pattern_data['is_confirmed'].sum()
+            if num_confirmed > 0:
+                print(f"[tripleTop] Pattern confirmed! Found {num_confirmed} triple top pattern(s)")
+            
             pattern_data.reset_index(drop=True, inplace=True)
 
-        # Only print when patterns are newly confirmed
-        if len(pattern_data) != 0:
-            pattern_data['is_confirmed'] = True
-            print(f"[tripleTop] Pattern confirmed! Found {len(pattern_data)} triple top pattern(s)")
+        return pattern_data
 
     def risk_Manager(self, pattern_data: pd.DataFrame):
         if len(pattern_data) != 0:

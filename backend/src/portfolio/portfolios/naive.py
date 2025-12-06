@@ -202,14 +202,14 @@ class NaivePortfolio(Portfolio):
         order_type = 'MKT'
 
         if direction == 'LONG' and cur_quantity == 0:
-            order = OrderEvent(symbol, order_type, mkt_quantity, 'BUY')
+            order = OrderEvent(symbol=symbol, order_type=order_type, quantity=mkt_quantity, direction='BUY')
         if direction == 'SHORT' and cur_quantity == 0:
-            order = OrderEvent(symbol, order_type, mkt_quantity, 'SELL')
+            order = OrderEvent(symbol=symbol, order_type=order_type, quantity=mkt_quantity, direction='SELL')
 
         if direction == 'EXIT' and cur_quantity > 0:
-            order = OrderEvent(symbol, order_type, abs(cur_quantity), 'SELL')
+            order = OrderEvent(symbol=symbol, order_type=order_type, quantity=abs(cur_quantity), direction='SELL')
         if direction == 'EXIT' and cur_quantity < 0:
-            order = OrderEvent(symbol, order_type, abs(cur_quantity), 'BUY')
+            order = OrderEvent(symbol=symbol, order_type=order_type, quantity=abs(cur_quantity), direction='BUY')
         return order
 
 

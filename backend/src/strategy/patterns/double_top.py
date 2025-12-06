@@ -34,9 +34,10 @@ class doubleTop(Strategy):
 
         self.pattern_data : dict = {sym: False for sym in bars.symbol_list}
         for s in self.symbol_list:
-            self.pattern_data[s] = pd.DataFrame({'is_detected': [False],\
-                                                 'is_confirmed': [False],\
-                                                 'is_bought': [False]}, index=[0])
+            self.pattern_data[s] = pd.DataFrame({'is_detected': [False],'is_confirmed': [False],'is_bought': [False],\
+                                                 'top1_date': [np.nan], 'neck1_date': [np.nan], 'top2_date': [np.nan],\
+                                                 'top1_price': [np.nan], 'neck1_price': [np.nan], 'top2_price': [np.nan],\
+                                                 'confirmation_date': [pd.NaT], 'signal': [np.nan], 'time_for_confirmation': [np.nan]}, index=[0])
 
         # Once buy & hold signal is given, these are set to True
         self.found: dict = {sym: False for sym in bars.symbol_list}
@@ -58,7 +59,7 @@ class doubleTop(Strategy):
         if event.type == 'MARKET':
             for s in self.symbol_list:
                 bars = self.bars.get_latest_bars(s, 1)
-                #ic(self.latest_symbol_data[s])
+
                 # get min max values and dates
                 minima, maxima = self.get_min_max(self.latest_symbol_data[s])
 
@@ -70,20 +71,31 @@ class doubleTop(Strategy):
                 if self.pattern_state[s] == "SCANNING":
                     # Run scanner
                     pattern_dates = self.pattern_scanner(minima, maxima)
+                    #ic(s, pattern_dates) # 1.1
 
                     #collect the pattern price points
-                    pattern_data = self.get_PriceData(self.latest_symbol_data[s], pattern_dates)
-                    if len(pattern_data) != 0:
-                        self.pattern_data[s] = pd.concat([self.pattern_data[s], pattern_data], ignore_index=True)
+                    price_data = self.get_PriceData(self.latest_symbol_data[s], pattern_dates)
+
+                    #ic(s, price_data) # 1.2
+                    if len(price_data) != 0:
+                        # Initialize status columns for the new candidates
+                        price_data['is_confirmed'] = False
+                        price_data['is_bought'] = False
+                        price_data['signal'] = np.nan
+                        price_data['confirmation_date'] = pd.NaT
+
+                        # Replace the state with the found patterns
+                        self.pattern_data[s] = price_data
+                        #ic(s, self.pattern_data[s]) # 1.3
 
                     if self.pattern_data[s]['is_detected'].any():
                         self.pattern_state[s] = "CONFIRMING"
 
                 elif self.pattern_state[s] == "CONFIRMING":
                     # Store the information for confirmation with the rest of the pattern data
-                    self.get_ConfDate(self.latest_symbol_data[s], self.pattern_data[s])
+                    self.pattern_data[s] = self.get_ConfDate(self.latest_symbol_data[s], self.pattern_data[s])
 
-                    if self.pattern_data[s]['is_confirmed'].any():
+                    if not self.pattern_data[s].empty and self.pattern_data[s]['is_confirmed'].any():
                         self.pattern_state[s] = "BUYING"
 
                 elif self.pattern_state[s] == "BUYING":
@@ -92,10 +104,9 @@ class doubleTop(Strategy):
                         bars = self.bars.get_latest_bars(s, N=1)
                         signal = SignalEvent(s, bars.index[0], 'SHORT')
                         self.events.put(signal)
+
                         self.bought[s] = True
                         print(f"[doubleTop] Generated SHORT signal for {s}")
-
-
 
     def plot_min_max(self, data: pd.DataFrame, minima: float, maxima: float):
         # List of data points that fall under the minima category
@@ -107,26 +118,72 @@ class doubleTop(Strategy):
                mpf.make_addplot(max_points, type='scatter', color="red", marker='v', markersize=400)]
 
         # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
-        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=False)
-
+        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=True)
+        #plt.close()
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        This is a strict mathematical approach.
+
+        How it works: It finds points that are strictly the maximum (or minimum) within a 
+        window of order points on both sides.
+
+        How it determines a peak: If you set order=10, a point is only considered a peak 
+           if it is higher than the 10 bars before it AND the 10 bars after it.
+
+        Verdict: Too Rigid. It tends to be "laggy" (because you need 10 bars after a high 
+           to confirm it was a high) or it misses legitimate patterns because a single 
+           noisy candle 5 bars later was slightly higher.
+
+        """
         #use the argrelextrema to compute the local minima and maxima points
         #local_min = argrelextrema(df.iloc[:-argrel_window]['Low'].values,
         #                      np.less, order=argrel_window)[0]
         #local_max = argrelextrema(df.iloc[:-argrel_window]['High'].values,
         #                      np.greater, order=argrel_window)[0]
 
+        """ 
+        This is a simpler library often used in signal processing, but less common in financial 
+        data now that scipy has improved.
+
+        How it works: It generally finds local maxima and filters them based on a normalized threshold.
+        Key Parameters:
+         - thres (Threshold): A value between 0.0 and 1.0. It calculates the range of your data (Max - Min) 
+           and effectively says "only keep peaks that are in the top X% of the price range".
+
+        Verdict: Less Flexible. The threshold is absolute relative to the window. If you have a strong trend 
+           where "tops" are lower than recent highs (like in a downtrend), this method might miss them because 
+           they aren't in the "top 60%" of the window's range.
+        """
         # Detect peaks (highs) and valleys (lows) using PeakUtils
         #peaks_idx = peakutils.indexes(df['High'], thres=0.60, min_dist=window)
         #valleys_idx = peakutils.indexes(-df['Low'], thres=0.60, min_dist=window)
 
+        
+        """
+        This is the most modern and flexible method of the three. It works by comparing neighboring 
+        values to find local maxima and then applying strict "properties" to filter them.
+
+        How it works: 
+            - It identifies any point that is higher than its immediate neighbors. 
+            It then filters these points based on parameters like prominence (how much the 
+            peak stands out from the surrounding "terrain") and distance.
+
+        Key Parameters:
+         - prominence: This is the vertical distance between the peak and its lowest contour line. 
+            This is excellent for trading because it ignores "noisy" small peaks and only finds 
+            "visually significant" tops.
+         - distance: The minimum number of horizontal bars required between neighboring peaks.
+
+        Verdict: Best for Trading. The "prominence" feature closely creates what a human eye would 
+            see as a "top" or "bottom" on a chart.
+        """        
         # Detect peaks (highs) and valleys (lows) using scipy.signal.find_peaks
-        peaks_idx_high, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
-        valleys_idx_low,_ = find_peaks(-df['Low'], height=None, prominence=0.5, distance=10)
+        peaks_idx, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
+        valleys_idx,_ = find_peaks(-df['Low'], height=None, prominence=0.5, distance=10)
 
         #store the minima and maxima values in a dataframe
-        return  df.iloc[valleys_idx_low].Low,  df.iloc[peaks_idx_high].High
+        return  df.iloc[valleys_idx].Low,  df.iloc[peaks_idx].High
 
     def pattern_scanner(self, minima: pd.Series, maxima: pd.Series, frequency: str ='daily') -> list:
         # To store pattern instances
@@ -168,10 +225,8 @@ class doubleTop(Strategy):
 
             # Checking if all conditions are true
             if cond_1 and cond_2 and cond_3 and cond_4:
-
                 # Append the pattern to list if all conditions are met
-                patterns.append(
-                    ([window.index[i] for i in range(0, len(window))]))
+                patterns.append( ( [window.index[i] for i in range(0, len(window))] ) )
 
         return patterns
 
@@ -201,7 +256,7 @@ class doubleTop(Strategy):
                     # return the short entry date if price went below the neckline
                      pattern_data.at[x,'confirmation_date'] = data_after_top2[data_after_top2 < pattern_data.at[x,'neck1_price']].index[0]
 
-                     #pattern_data[['confirmation_date']] = pattern_data[['confirmation_date']].apply(pd.to_datetime, format='%Y-%m-%d')
+                     pattern_data[['confirmation_date']] = pattern_data[['confirmation_date']].apply(pd.to_datetime, format='%Y-%m-%d')
 
                      # Store the number of days taken to generate a short entry date in the column 'time_for_confirmation'
                      pattern_data.at[x,'time_for_confirmation'] = (pattern_data.at[x,'confirmation_date'] - pattern_data.at[x,'top2_date']).days
@@ -211,17 +266,25 @@ class doubleTop(Strategy):
                     pattern_data.at[x,'confirmation_date'] = np.nan
 
             pattern_data['signal'] = -1
+            
+            # Set is_confirmed based on whether a confirmation date was found
+            pattern_data['is_confirmed'] = pd.notna(pattern_data['confirmation_date'])
+            
+            num_confirmed = pattern_data['is_confirmed'].sum()
+            if num_confirmed > 0:
+                print(f"[doubleTop] Pattern confirmed! Found {num_confirmed} double top pattern(s)")
 
-            # Drop NaN values from 'hs_patterns_data'
-            pattern_data.dropna(inplace=True)
-
+            # Only drop if we want to cleanup INVALID patterns? 
+            # For now, let's keep them so we can confirm them later?
+            # Actually, if we want to "wait", we shouldn't drop.
+            # But we might want to drop only if they are somehow "too old"? 
+            # For now, just removing dropna allows 'waiting'.
+            
             pattern_data.reset_index(drop=True, inplace = True)
 
-            # Selecting the patterns that represent head and shoulders patterns that can be traded
-            #pattern_data = pattern_data[(pattern_data['time_for_confirmation'] > 5) & ( pattern_data['time_for_confirmation'] < 30)]
-        if len(pattern_data) != 0:
-            pattern_data['is_confirmed'] = True
-            print(f"[doubleTop] Pattern confirmed! Found {len(pattern_data)} double top pattern(s)")
+        return pattern_data
+        
+        return pattern_data
 
     def risk_Manager(self, pattern_data: pd.DataFrame):
         # If not empty
