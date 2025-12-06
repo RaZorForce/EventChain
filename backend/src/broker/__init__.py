@@ -1,9 +1,12 @@
+"""
+Broker island - order execution.
+"""
 from .base import ExecutionHandler
 from .simulated import SimulatedExecutionHandler
+# from .interactive_brokers import IBExecutionHandler  # Requires 'ib' package
 
-try:
-    from .interactive_brokers import IBExecutionHandler
-except ImportError:
-    IBExecutionHandler = None
-
-__all__ = ['ExecutionHandler', 'SimulatedExecutionHandler', 'IBExecutionHandler']
+__all__ = [
+    'ExecutionHandler',
+    'SimulatedExecutionHandler',
+    # 'IBExecutionHandler',  # Commented out - requires optional dependency
+]

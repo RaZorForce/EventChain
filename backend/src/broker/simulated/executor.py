@@ -8,7 +8,7 @@ import uuid
 
 from src.engine.events import ExecutionEvent, OrderEvent
 
-from .base import ExecutionHandler
+from ..base import ExecutionHandler
 
 
 class SimulatedExecutionHandler(ExecutionHandler):

@@ -11,9 +11,9 @@ from math import floor
 
 from src.data_handler import DataHandler
 from src.engine.events import ExecutionEvent, OrderEvent, SignalEvent, MarketEvent
-from src.performance import create_sharpe_ratio, create_drawdowns
+from ..metrics import create_sharpe_ratio, create_drawdowns
 
-from .base import Portfolio
+from ..base import Portfolio
 
 
 class NaivePortfolio(Portfolio):

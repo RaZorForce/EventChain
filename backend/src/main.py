@@ -5,7 +5,7 @@ import queue
 
 from src.config import SYMBOLS, CSV_DIR, START_DATE, INITIAL_CAPITAL, STRATEGY_NAME, STRATEGY_REGISTRY
 from src.engine import TradingEngine
-from src.bars import HistoricCSVDataHandler
+from src.data_handler import HistoricCSVDataHandler
 from src.portfolio import NaivePortfolio
 from src.broker import SimulatedExecutionHandler
 
