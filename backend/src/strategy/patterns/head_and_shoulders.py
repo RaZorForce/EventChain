@@ -61,8 +61,14 @@ class headAndShoulders(Strategy):
         Process each MarketEvent and check for head and shoulders pattern.
         Emits SHORT signal when pattern is confirmed.
         """
+        #prvents system from buying multiple symbols in parallel if a position is already open
+        #if any(self.bought.values()):
+        #    return
         if event.type == 'MARKET':
             for s in self.symbol_list:
+                # prevents system from buying same symbol multiple times if a position is already open
+                if self.bought[s]:
+                    continue
                 bars = self.bars.get_latest_bars(s, 1)
                 minima, maxima = self.get_min_max(self.latest_symbol_data[s])
 

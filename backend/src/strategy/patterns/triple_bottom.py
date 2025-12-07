@@ -48,15 +48,21 @@ class tripleBottom(Strategy):
         Process each MarketEvent and check for triple bottom pattern.
         Emits LONG signal when pattern is confirmed.
         """
+        #prvents system from buying multiple symbols in parallel if a position is already open
+        #if any(self.bought.values()):
+        #    return
         if event.type == 'MARKET':
             for s in self.symbol_list:
+                # prevents system from buying same symbol multiple times if a position is already open
+                if self.bought[s]:
+                    continue
                 bars = self.bars.get_latest_bars(s, 1)
                 minima, maxima = self.get_min_max(self.latest_symbol_data[s])
 
                 if len(minima) !=0 and len(maxima)!= 0:
                     if str(self.latest_symbol_data[s].index[-1]) == "2024-02-08 00:00:00":
                         pass
-                    self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
+                        self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
 
                 if self.pattern_state[s] == "SCANNING":
                     pattern_dates = self.pattern_scanner(minima, maxima)
