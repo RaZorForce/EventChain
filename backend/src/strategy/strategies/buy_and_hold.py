@@ -1,15 +1,15 @@
+# -*- coding: utf-8 -*-
 """
-Buy and Hold strategy - simple benchmark strategy.
+Buy and Hold Strategy
 """
 from queue import Queue
 
 from src.data_handler import DataHandler
 from src.engine.events import SignalEvent
+from .base import Strategies
 
-from ..base import Strategy
 
-
-class BuyAndHoldStrategy(Strategy):
+class BuyAndHoldStrategy(Strategies):
     """
     This is an extremely simple strategy that goes LONG all of the
     symbols as soon as a bar is received. It will never exit a position.
@@ -18,34 +18,29 @@ class BuyAndHoldStrategy(Strategy):
     as well as a benchmark upon which to compare other strategies.
     """
 
-    def __init__(self, bars: DataHandler, events: Queue) -> None:
+    def __init__(self, bars: DataHandler, events: Queue):
         """
         Initialises the buy and hold strategy.
 
         Parameters:
         bars - The DataHandler object that provides bar information
-        events - The Event Queue object.
+        events - The Event Queue object
         """
-        self.name = "Buy and Hold"
-        self.bars: DataHandler = bars
-        self.symbol_list: list = bars.symbol_list
-        self.latest_symbol_data: dict = bars.latest_symbol_data
-        self.events: Queue = events
+        super().__init__(bars, events)
+        self.name = "Buy & Hold"
+        self.bought = self._calculate_initial_bought()
 
-        # Once buy & hold signal is given, these are set to True
-        self.bought: dict = self._calculate_initial_bought()
-
-    def _calculate_initial_bought(self) -> dict:
+    def _calculate_initial_bought(self):
         """
         Adds keys to the bought dictionary for all symbols
-        and sets them to False.
+        and sets them to 'False'.
         """
-        bought: dict = {}
+        bought = {}
         for s in self.symbol_list:
             bought[s] = False
         return bought
 
-    def calculate_signals(self, event: Queue) -> None:
+    def calculate_signals(self, event):
         """
         For "Buy and Hold" we generate a single signal per symbol
         and then no additional signals. This means we are
@@ -57,15 +52,10 @@ class BuyAndHoldStrategy(Strategy):
         """
         if event.type == 'MARKET':
             for s in self.symbol_list:
-                bars = self.bars.get_latest_bars(s, N=2)
-                if bars is not None and len(bars) > 0:
+                bars = self.bars.get_latest_bars(s, N=1)
+                if bars is not None and bars != [] and len(bars) > 0:
                     if self.bought[s] == False:
                         # (Symbol, Datetime, Type = LONG, SHORT or EXIT)
-                        signal = SignalEvent(
-                            strategy_id=self.name,
-                            symbol=s,
-                            signal_type='LONG',
-                            timestamp=bars.index[0]
-                        )
+                        signal = SignalEvent(symbol=s, timestamp=bars.index[0], signal_type='LONG')
                         self.events.put(signal)
                         self.bought[s] = True

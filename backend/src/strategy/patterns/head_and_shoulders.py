@@ -4,18 +4,12 @@ import numpy as np
 import pandas as pd
 from queue import Queue
 from typing import Tuple
-from scipy.signal import find_peaks
-from icecream import ic
-import mplfinance as mpf
-import matplotlib.pyplot as plt
 
 from src.data_handler import DataHandler
-from src.engine.events import SignalEvent
-
-from ..base import Strategy
+from .base import Patterns
 
 
-class headAndShoulders(Strategy):
+class headAndShoulders(Patterns):
     r"""
     Head and Shoulders pattern (Bearish reversal).
 
@@ -31,102 +25,10 @@ class headAndShoulders(Strategy):
     """
 
     def __init__(self, bars: DataHandler, events: Queue) -> None:
+        super().__init__(bars, events)
         self.name = "Head and Shoulders"
         self.datapoints = 5
         self.bias = "Short"
-        self.bars: DataHandler = bars
-        self.symbol_list: list = bars.symbol_list
-        self.latest_symbol_data: dict = bars.latest_symbol_data
-        self.events: Queue = events
-
-        self.highs = {sym: [] for sym in bars.symbol_list}
-        self.lows = {sym: [] for sym in bars.symbol_list}
-        self.date = {sym: [] for sym in bars.symbol_list}
-
-        self.pattern_data: dict = {sym: False for sym in bars.symbol_list}
-        for s in self.symbol_list:
-            self.pattern_data[s] = pd.DataFrame({'is_detected': [False],'is_confirmed': [False],'is_bought': [False],\
-                                                 'sh1_date': [np.nan], 'neck1_date': [np.nan], 'head_date': [np.nan], 'neck2_date': [np.nan], 'sh2_date': [np.nan],\
-                                                 'sh1_price': [np.nan], 'neck1_price': [np.nan], 'head_price': [np.nan], 'neck2_price': [np.nan], 'sh2_price': [np.nan],\
-                                                 'confirmation_date': [pd.NaT], 'signal': [np.nan], 'time_for_confirmation': [np.nan]}, index=[0])
-
-        self.found: dict = {sym: False for sym in bars.symbol_list}
-        self.detected: dict = {sym: False for sym in bars.symbol_list}
-        self.confirmed = {sym: False for sym in bars.symbol_list}
-        self.bought: dict = {sym: False for sym in bars.symbol_list}
-        self.pattern_state = {sym: "SCANNING" for sym in bars.symbol_list}
-
-    def calculate_signals(self, event: Queue) -> None:
-        """
-        Process each MarketEvent and check for head and shoulders pattern.
-        Emits SHORT signal when pattern is confirmed.
-        """
-        #prvents system from buying multiple symbols in parallel if a position is already open
-        #if any(self.bought.values()):
-        #    return
-        if event.type == 'MARKET':
-            for s in self.symbol_list:
-                # prevents system from buying same symbol multiple times if a position is already open
-                if self.bought[s]:
-                    continue
-                bars = self.bars.get_latest_bars(s, 1)
-                minima, maxima = self.get_min_max(self.latest_symbol_data[s])
-
-                if len(minima) !=0 and len(maxima)!= 0:
-                    if str(self.latest_symbol_data[s].index[-1]) == "2024-02-08 00:00:00":
-                        pass
-                        #self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
-
-                if self.pattern_state[s] == "SCANNING":
-                    pattern_dates = self.pattern_scanner(minima, maxima)
-                    #collect the pattern price points
-                    price_data = self.get_PriceData(self.latest_symbol_data[s], pattern_dates)
-                    
-                    if len(price_data) != 0:
-                        # Initialize status columns for the new candidates
-                        price_data['is_confirmed'] = False
-                        price_data['is_bought'] = False
-                        price_data['signal'] = np.nan
-                        price_data['confirmation_date'] = pd.NaT
-                        
-                        # Replace the state with the found patterns
-                        self.pattern_data[s] = price_data
-                        
-                    if self.pattern_data[s]['is_detected'].any():
-                        self.pattern_state[s] = "CONFIRMING"
-
-                elif self.pattern_state[s] == "CONFIRMING":
-                    # Store the information for confirmation with the rest of the pattern data
-                    self.pattern_data[s] = self.get_ConfDate(self.latest_symbol_data[s], self.pattern_data[s])
-
-                    if not self.pattern_data[s].empty and self.pattern_data[s]['is_confirmed'].any():
-                        self.pattern_state[s] = "BUYING"
-
-                elif self.pattern_state[s] == "BUYING":
-                    if not self.bought[s]:
-                        bars = self.bars.get_latest_bars(s, N=1)
-                        signal = SignalEvent(symbol=s, timestamp=bars.index[0], signal_type='SHORT')
-                        self.events.put(signal)
-                        self.bought[s] = True
-                        print(f"[headAndShoulders] Generated SHORT signal for {s}")
-
-    def plot_min_max(self, data: pd.DataFrame, minima: float, maxima: float):
-        # List of data points that fall under the minima category
-        min_points = [minima.loc[k] if k in minima.index else np.nan for k in data.index]
-        max_points = [maxima.loc[k] if k in maxima.index else np.nan for k in data.index]
-
-        # Additional plots for marking the support and resistance levels
-        apd = [mpf.make_addplot(min_points, type='scatter', color="green",marker='^', markersize=400),
-               mpf.make_addplot(max_points, type='scatter', color="red", marker='v', markersize=400)]
-
-        # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
-        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=False)
-        plt.close()
-
-    def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        peaks_idx, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
-        valleys_idx, _ = find_peaks(-df['Low'], height=None, prominence=0.5, distance=10)
-        return df.iloc[valleys_idx].Low, df.iloc[peaks_idx].High
 
     def pattern_scanner(self, minima: pd.Series, maxima: pd.Series, frequency: str = 'daily') -> list:
         """
