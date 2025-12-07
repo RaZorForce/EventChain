@@ -9,7 +9,7 @@ from ib.ext.Contract import Contract
 from ib.ext.Order import Order
 from ib.opt import ibConnection, message
 
-from src.events import FillEvent, OrderEvent
+from src.engine.events import FillEvent, OrderEvent
 from .base import ExecutionHandler
 
 class IBExecutionHandler(ExecutionHandler):

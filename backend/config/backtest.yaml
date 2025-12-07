@@ -1,6 +1,6 @@
 # Backtest Configuration
 
-strategy: double_top  # Options: double_top, double_bottom, triple_top, triple_bottom, head_and_shoulders, head_and_shoulders_inverse, buy_and_hold
+strategy: triple_bottom  # Options: double_top, double_bottom, triple_top, triple_bottom, head_and_shoulders, head_and_shoulders_inverse, buy_and_hold
 
 data:
   csv_dir: data/Historical/Daily
@@ -10,47 +10,4 @@ portfolio:
   initial_capital: 100000.0
 
 symbols:
-  - ADPT
-  - ALEC
-  - AMRN
-  - ASLE
-  - ASTS
-  - AVXL
-  - BCRX
-  - BITF
-  - BLZE
-  - BTDR
-  - CAN
-  - CERS
-  - CIFR
-  - CNTA
-  - EXAI
-  - FULC
-  - HIVE
-  - HUMA
-  - HUT
-  - IREN
-  - JANX
-  - LXRX
-  - MNKD
-  - MTC
-  - MTTR
-  - MVIS
-  - NRIX
   - NVTS
-  - NWTN
-  - OCUL
-  - PRME
-  - REPL
-  - RVNC
-  - SEAT
-  - SKYT
-  - SNDL
-  - SOPH
-  - SOUN
-  - TERN
-  - TMC
-  - TNYA
-  - TSHA
-  - ULCC
-  - WULF

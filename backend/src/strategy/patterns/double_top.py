@@ -11,8 +11,8 @@ from icecream import ic
 import mplfinance as mpf
 import matplotlib.pyplot as plt
 
-from src.bars import DataHandler
-from src.events import SignalEvent
+from src.data_handler import DataHandler
+from src.engine.events import SignalEvent
 
 from ..base import Strategy
 
@@ -65,8 +65,8 @@ class doubleTop(Strategy):
 
                 if len(minima) !=0 and len(maxima)!= 0:
                     if str(self.latest_symbol_data[s].index[-1]) == "2024-02-08 00:00:00":
-                        #pass
-                        self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
+                        pass
+                        #self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
 
                 if self.pattern_state[s] == "SCANNING":
                     # Run scanner
@@ -102,7 +102,7 @@ class doubleTop(Strategy):
                     if not self.bought[s]:
                         # Generate SHORT signal for double-top pattern
                         bars = self.bars.get_latest_bars(s, N=1)
-                        signal = SignalEvent(s, bars.index[0], 'SHORT')
+                        signal = SignalEvent(symbol=s, timestamp=bars.index[0], signal_type='SHORT')
                         self.events.put(signal)
 
                         self.bought[s] = True
@@ -118,7 +118,7 @@ class doubleTop(Strategy):
                mpf.make_addplot(max_points, type='scatter', color="red", marker='v', markersize=400)]
 
         # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
-        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=True)
+        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=False)
         plt.close()
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:

@@ -9,8 +9,8 @@ from icecream import ic
 import mplfinance as mpf
 import matplotlib.pyplot as plt
 
-from src.bars import DataHandler
-from src.events import SignalEvent
+from src.data_handler import DataHandler
+from src.engine.events import SignalEvent
 
 from ..base import Strategy
 
@@ -56,7 +56,7 @@ class doubleBottom(Strategy):
                 if len(minima) !=0 and len(maxima)!= 0:
                     if str(self.latest_symbol_data[s].index[-1]) == "2024-02-08 00:00:00":
                         pass
-                        self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
+                        #self.plot_min_max(self.latest_symbol_data[s], minima, maxima)
 
                 if self.pattern_state[s] == "SCANNING":
                     pattern_dates = self.pattern_scanner(minima, maxima)
@@ -86,7 +86,7 @@ class doubleBottom(Strategy):
                 elif self.pattern_state[s] == "BUYING":
                     if not self.bought[s]:
                         bars = self.bars.get_latest_bars(s, N=1)
-                        signal = SignalEvent(s, bars.index[0], 'LONG')
+                        signal = SignalEvent(symbol=s, timestamp=bars.index[0], signal_type='LONG')
                         self.events.put(signal)
                         self.bought[s] = True
                         print(f"[doubleBottom] Generated LONG signal for {s}")
@@ -101,13 +101,13 @@ class doubleBottom(Strategy):
                mpf.make_addplot(max_points, type='scatter', color="red", marker='v', markersize=400)]
 
         # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
-        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=True)
+        mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=False)
         plt.close()
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        peaks_idx_high, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
-        valleys_idx_low, _ = find_peaks(-df['Low'], height=None, prominence=0.5, distance=10)
-        return df.iloc[valleys_idx_low].Low, df.iloc[peaks_idx_high].High
+        peaks_idx, _ = find_peaks(df['High'], height=None, prominence=0.5, distance=10)
+        valleys_idx, _ = find_peaks(-df['Low'], height=None, prominence=0.5, distance=10)
+        return df.iloc[valleys_idx].Low, df.iloc[peaks_idx].High
 
     def pattern_scanner(self, minima: pd.Series, maxima: pd.Series, frequency: str = 'daily') -> list:
         """
