@@ -119,7 +119,7 @@ class doubleTop(Strategy):
 
         # Plot the OHLC data along with the lines passing through the nearest support and resistance levels
         mpf.plot(data, type='candle', style='classic', addplot=apd, title=str(data.index[-1]),figsize=(15, 7), block=True)
-        #plt.close()
+        plt.close()
 
     def get_min_max(self, df: pd.DataFrame, window: int = 10) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
