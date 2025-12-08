@@ -26,3 +26,9 @@ secrets.py
 
 # Keep example configs, ignore local overrides
 backend/config/local.yaml
+
+.agent
+.agentvibes
+.bmad
+.claude
+.github
