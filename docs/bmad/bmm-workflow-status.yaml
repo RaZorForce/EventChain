@@ -1,0 +1,28 @@
+# BMM Workflow Status
+# Tracks completion of BMM workflows for this project
+
+project_name: EventChainTrader
+project_type: desktop_app
+
+# Completed Workflows
+workflows:
+  document-project:
+    status: complete
+    output: docs/bmad/index.md
+    completed_at: 2025-12-10
+
+  brainstorming-session:
+    status: complete
+    output: docs/bmad/analysis/brainstorming-session-2025-12-10.md
+    completed_at: 2025-12-10
+
+  prd:
+    status: complete
+    output: docs/bmad/prd.md
+    completed_at: 2025-12-10
+    steps_completed: 11
+
+# Suggested Next Workflows
+next_suggested:
+  - create-architecture
+  - create-epics-stories
