@@ -7,6 +7,7 @@ from src.config import SYMBOLS, CSV_DIR, START_DATE, INITIAL_CAPITAL, STRATEGY_N
 from src.engine import TradingEngine
 from src.data_handler import HistoricCSVDataHandler
 from src.portfolio import NaivePortfolio, BasicPortfolio
+from src.portfolio import PercentSizer
 from src.broker import SimulatedExecutionHandler
 
 
@@ -26,7 +27,8 @@ if __name__ == "__main__":
     strategy = StrategyClass(bars, events)
     print(f"[main] Using strategy: {strategy.name}")
 
-    portfolio = BasicPortfolio(bars, events, INITIAL_CAPITAL)
+    sizer = PercentSizer(0.10)
+    portfolio = BasicPortfolio(bars, events, INITIAL_CAPITAL, sizer=sizer)
     broker = SimulatedExecutionHandler(events)
 
     # Run engine

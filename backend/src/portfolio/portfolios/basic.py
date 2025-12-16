@@ -28,7 +28,7 @@ class BasicPortfolio(Portfolio):
     - Weighted Average Cost basis for P&L calculations.
     - Automatic cleanup of zero-quantity positions.
     - Structured logging.
-    - Integration with FixedSizer for basic order sizing.
+    - Integration with FixedSizer for basic order sizing. PercentSizer for dynamic order sizing.
     """
 
     def __init__(
@@ -121,7 +121,12 @@ class BasicPortfolio(Portfolio):
         """
         Internal: Create an OrderEvent using the Sizer.
         """
-        quantity = self.sizer.calculate_quantity(signal.strength)
+        price = 0.0
+        latest = self.bars.get_latest_bars(signal.symbol, 1)
+        if latest is not None and not latest.empty:
+            price = latest['Close'].iloc[-1]
+            
+        quantity = self.sizer.calculate_quantity(price=price, capital=self.cash, strength=signal.strength)
         if quantity <= 0:
             return None
 

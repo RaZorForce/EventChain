@@ -1,6 +1,6 @@
 # Backtest Configuration
 
-strategy: double_top  # Options: double_top, double_bottom, triple_top, triple_bottom, head_and_shoulders, head_and_shoulders_inverse, buy_and_hold
+strategy: double_bottom  # Options: double_top, double_bottom, triple_top, triple_bottom, head_and_shoulders, head_and_shoulders_inverse, buy_and_hold
 
 data:
   csv_dir: data/Historical/Daily
@@ -10,4 +10,4 @@ portfolio:
   initial_capital: 100000.0
 
 symbols:
-  - NVTS
+  - ALEC
