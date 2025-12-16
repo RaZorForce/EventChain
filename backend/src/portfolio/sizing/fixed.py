@@ -18,7 +18,7 @@ class FixedSizer:
         """
         self.default_quantity = default_quantity
     
-    def calculate_quantity(self, signal_strength: float = 1.0) -> int:
+    def calculate_quantity(self, signal_strength: float = 1.0, **kwargs) -> int:
         """
         Calculate position size.
         

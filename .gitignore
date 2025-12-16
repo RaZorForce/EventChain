@@ -26,3 +26,5 @@ secrets.py
 
 # Keep example configs, ignore local overrides
 backend/config/local.yaml
+
+.bmad

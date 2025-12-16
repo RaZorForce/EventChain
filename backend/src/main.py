@@ -6,7 +6,7 @@ import queue
 from src.config import SYMBOLS, CSV_DIR, START_DATE, INITIAL_CAPITAL, STRATEGY_NAME, STRATEGY_REGISTRY
 from src.engine import TradingEngine
 from src.data_handler import HistoricCSVDataHandler
-from src.portfolio import NaivePortfolio
+from src.portfolio import NaivePortfolio, BasicPortfolio
 from src.broker import SimulatedExecutionHandler
 
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     strategy = StrategyClass(bars, events)
     print(f"[main] Using strategy: {strategy.name}")
 
-    portfolio = NaivePortfolio(bars, events, START_DATE, INITIAL_CAPITAL)
+    portfolio = BasicPortfolio(bars, events, INITIAL_CAPITAL)
     broker = SimulatedExecutionHandler(events)
 
     # Run engine
