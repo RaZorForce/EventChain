@@ -1,23 +1,25 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import React from "react"
 
+// Dashboard Components
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { KPICards } from "@/components/dashboard/KPICards"
+import { ZellaScoreCard, TradesAndTimePanel } from "@/components/dashboard/ZellaScore"
+import { CumulativePnLChart, DailyPnLBarChart } from "@/components/dashboard/Charts"
+import { TradingCalendar } from "@/components/dashboard/TradingCalendar"
+
+// Mock Data
+import { mockDashboardData } from "@/lib/mock-data"
+
 export default function App() {
+  const data = mockDashboardData;
+
   return (
-    <div className="dark min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen bg-background text-foreground flex">
       <SidebarProvider
         style={{
           "--sidebar-width": "350px",
@@ -26,40 +28,51 @@ export default function App() {
       >
         <AppSidebar />
         <SidebarInset>
-          <header className="sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
-            {/* <SidebarTrigger className="-ml-1" /> */}
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Tracking</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Dashboard</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            <div className="ml-auto flex items-center gap-2">
-              {/* Placeholders for Filters and Date Range */}
-              <div className="text-sm text-muted-foreground">Aug 21, 2025 - Feb 28, 2025</div>
-            </div>
-          </header>
-          <div className="flex flex-1 flex-col gap-4 p-4">
-            <div className="grid auto-rows-min gap-4 md:grid-cols-4">
-              {/* KPI Cards Placeholder */}
-              <div className="aspect-video rounded-xl bg-muted/50" />
-              <div className="aspect-video rounded-xl bg-muted/50" />
-              <div className="aspect-video rounded-xl bg-muted/50" />
-              <div className="aspect-video rounded-xl bg-muted/50" />
-            </div>
-            <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {/* Radar and Main Chart Placeholders */}
-              <div className="aspect-square rounded-xl bg-muted/50 lg:col-span-1" />
-              <div className="aspect-video rounded-xl bg-muted/50 lg:col-span-2" />
+          {/* Dashboard Header */}
+          <DashboardHeader lastImport={data.lastImport} />
+
+          {/* Main Dashboard Content */}
+          <div className="flex flex-1 flex-col gap-4 p-4 bg-muted/20">
+            {/* KPI Cards Row */}
+            <KPICards kpis={data.kpis} />
+
+            {/* Charts Row with Zella Score */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Column 1: Cumulative P&L Chart */}
+              <div>
+                <CumulativePnLChart data={data.cumulativePnL} />
+              </div>
+
+              {/* Column 2: Daily P&L Chart */}
+              <div>
+                <DailyPnLBarChart data={data.dailyPnL} />
+              </div>
+
+              {/* Column 3: Zella Score Card */}
+              <div>
+                <ZellaScoreCard zellaScore={data.zellaScore} />
+              </div>
             </div>
 
-            <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+            {/* Bottom Section - Two Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Column 1: Recent Trades, Open Positions & Trade Time */}
+              <div>
+                <TradesAndTimePanel
+                  recentTrades={data.recentTrades}
+                  openPositions={data.openPositions}
+                  tradeTimeData={data.tradeTimeDistribution}
+                />
+              </div>
+
+              {/* Column 2: Trading Calendar */}
+              <div>
+                <TradingCalendar
+                  calendarData={data.calendarData}
+                  initialDate={new Date(2025, 1, 1)} // February 2025
+                />
+              </div>
+            </div>
           </div>
         </SidebarInset>
       </SidebarProvider>

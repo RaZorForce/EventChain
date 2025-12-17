@@ -1,8 +1,6 @@
 import {
-    Calendar,
     Home,
     LineChart,
-    Settings,
     User,
     BookOpen,
     History,
@@ -21,9 +19,6 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarProvider,
-    SidebarRail,
-    SidebarTrigger,
-    useSidebar,
 } from "@/components/ui/sidebar"
 import React from "react";
 

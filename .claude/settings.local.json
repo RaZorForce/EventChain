@@ -7,7 +7,16 @@
       "Bash(uv run:*)",
       "Bash(dir:*)",
       "Bash(.claude/hooks/play-tts.sh:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(/home/akira/workspaces/apps/EventChainTrader/.claude/hooks/play-tts.sh:*)",
+      "Bash(cat:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(tree:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
