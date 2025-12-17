@@ -145,7 +145,7 @@ export const mockDashboardData: DashboardData = {
       ratio: 0.93,
     },
   },
-  zellaScore: {
+  tradingScore: {
     overall: 50.81,
     metrics: {
       winRate: 67,

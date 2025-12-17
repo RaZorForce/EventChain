@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Settings, Maximize2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
+import { ChevronLeft, ChevronRight, Settings, Maximize2, Check } from 'lucide-react';
 import { CalendarGrid } from './CalendarGrid';
 import type { CalendarDay } from '@/types/dashboard';
 
@@ -21,6 +30,7 @@ function formatCurrency(value: number): string {
 
 export function TradingCalendar({ calendarData, initialDate }: TradingCalendarProps) {
   const [currentDate, setCurrentDate] = useState(initialDate || new Date());
+  const [showWeekends, setShowWeekends] = useState(true);
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
@@ -77,9 +87,23 @@ export function TradingCalendar({ calendarData, initialDate }: TradingCalendarPr
             {formatCurrency(totalPnL)}
           </Badge>
           <span className="text-xs text-muted-foreground">{tradingDays} days</span>
-          <button className="text-muted-foreground hover:text-foreground">
-            <Settings className="h-4 w-4" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Calendar Settings</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowWeekends(!showWeekends)}>
+                <div className="flex items-center justify-between w-full">
+                  <span>Show weekends</span>
+                  {showWeekends && <Check className="h-4 w-4" />}
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button className="text-muted-foreground hover:text-foreground">
             <Maximize2 className="h-4 w-4" />
           </button>
@@ -87,7 +111,7 @@ export function TradingCalendar({ calendarData, initialDate }: TradingCalendarPr
       </div>
 
       {/* Calendar Grid */}
-      <CalendarGrid year={year} month={month} calendarData={calendarData} />
+      <CalendarGrid year={year} month={month} calendarData={calendarData} showWeekends={showWeekends} />
     </Card>
   );
 }

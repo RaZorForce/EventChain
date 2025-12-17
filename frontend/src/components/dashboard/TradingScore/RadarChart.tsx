@@ -6,10 +6,10 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
 } from 'recharts';
-import type { ZellaScoreMetrics } from '@/types/dashboard';
+import type { TradingScoreMetrics } from '@/types/dashboard';
 
 interface RadarChartProps {
-  metrics: ZellaScoreMetrics;
+  metrics: TradingScoreMetrics;
 }
 
 export function RadarChart({ metrics }: RadarChartProps) {

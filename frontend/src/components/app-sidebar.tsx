@@ -8,18 +8,10 @@ import {
     School,
     Pencil,
     RotateCcw,
-    Bell
+    Bell,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react"
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarProvider,
-} from "@/components/ui/sidebar"
 import React from "react";
 
 // Menu items for the secondary sidebar
@@ -76,143 +68,176 @@ const navMain = [
 
 export function AppSidebar() {
     const [activeTab, setActiveTab] = React.useState("track")
+    const [isSecondaryCollapsed, setIsSecondaryCollapsed] = React.useState(false)
 
     return (
-        <SidebarProvider
-            style={{
-                "--sidebar-width": "350px",
-            } as React.CSSProperties}
-        >
-            {/* Primary Icon Sidebar (Leftmost) */}
-            <Sidebar collapsible="none" className="!w-[calc(var(--sidebar-width-icon)_+_1px)] border-r bg-sidebar">
-                <SidebarHeader>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton size="lg" asChild className="md:h-8 md:p-0">
-                                <a href="#">
-                                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                                        <TrendingUp className="size-4" />
-                                    </div>
-                                    <div className="grid flex-1 text-left text-sm leading-tight">
-                                        <span className="truncate font-semibold">EventChain</span>
-                                        <span className="truncate text-xs">Trader</span>
-                                    </div>
-                                </a>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarHeader>
-                <SidebarContent>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                isActive={activeTab === "track"}
-                                onClick={() => setActiveTab("track")}
-                                tooltip="Tracking"
-                                className="justify-center"
-                            >
-                                <Pencil className="size-5" />
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                isActive={activeTab === "backtest"}
-                                onClick={() => setActiveTab("backtest")}
-                                tooltip="Backtesting"
-                                className="justify-center"
-                            >
-                                <RotateCcw className="size-5" />
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                isActive={activeTab === "mentor"}
-                                onClick={() => setActiveTab("mentor")}
-                                tooltip="Mentor Mode"
-                                className="justify-center"
-                            >
-                                <User className="size-5" />
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                isActive={activeTab === "university"}
-                                onClick={() => setActiveTab("university")}
-                                tooltip="University"
-                                className="justify-center"
-                            >
-                                <School className="size-5" />
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarContent>
-                <SidebarFooter>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton tooltip="Notifications" className="justify-center">
-                                <Bell className="size-5" />
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton tooltip="Account" className="justify-center">
-                                <User className="size-5" />
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarFooter>
-            </Sidebar>
+        <div className="flex h-screen sticky top-0">
+            {/* Primary Icon Sidebar (Always Visible) */}
+            <div className="w-14 min-w-14 border-r bg-sidebar flex flex-col shrink-0 h-full">
+                {/* Logo */}
+                <div className="flex items-center justify-center p-3 border-b border-sidebar-border">
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                        <TrendingUp className="size-4" />
+                    </div>
+                </div>
 
-            {/* Secondary Sidebar (Collapsible Menu) */}
-            <Sidebar collapsible="none" className="hidden flex-1 md:flex bg-sidebar-accent/10">
-                <SidebarHeader className="gap-3.5 border-b p-4">
-                    <div className="flex w-full items-center justify-between">
-                        <div className="text-base font-medium text-foreground">
-                            {activeTab === "track" && "Tracking"}
-                            {activeTab === "backtest" && "Backtesting"}
-                            {activeTab === "mentor" && "Mentor Mode"}
-                            {activeTab === "university" && "University"}
-                        </div>
-                        {/* <SidebarTrigger className="-mr-2 ml-auto" /> */}
-                    </div>
-                </SidebarHeader>
-                <SidebarContent>
-                    <div className="p-2">
-                        {/* Dynamic Content based on Active Tab */}
-                        {activeTab === "track" && (
-                            <SidebarMenu>
-                                {navMain.map((item) => (
-                                    <SidebarMenuItem key={item.title}>
-                                        <SidebarMenuButton isActive={item.isActive} asChild>
-                                            <a href={item.url} className="flex items-center gap-2">
-                                                <item.icon />
-                                                <span>{item.title}</span>
-                                                {item.badge && (
-                                                    <span className="ml-auto text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
-                                                        {item.badge}
-                                                    </span>
-                                                )}
-                                            </a>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                        )}
-                        {activeTab !== "track" && (
-                            <div className="p-4 text-sm text-muted-foreground">
-                                Module not implemented yet.
-                            </div>
-                        )}
-                    </div>
-                </SidebarContent>
-                <SidebarFooter>
-                    {/* Add Trade Button */}
-                    <div className="p-2">
-                        <button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md font-medium text-sm transition-colors">
-                            + Add Trade
+                {/* Primary Navigation Icons */}
+                <div className="flex-1 py-2">
+                    <div className="flex flex-col gap-1 px-2">
+                        <button
+                            className={`flex items-center justify-center p-2.5 rounded-md transition-colors ${
+                                activeTab === "track"
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            }`}
+                            onClick={() => setActiveTab("track")}
+                            title="Tracking"
+                        >
+                            <Pencil className="size-5" />
+                        </button>
+                        <button
+                            className={`flex items-center justify-center p-2.5 rounded-md transition-colors ${
+                                activeTab === "backtest"
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            }`}
+                            onClick={() => setActiveTab("backtest")}
+                            title="Backtesting"
+                        >
+                            <RotateCcw className="size-5" />
+                        </button>
+                        <button
+                            className={`flex items-center justify-center p-2.5 rounded-md transition-colors ${
+                                activeTab === "mentor"
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            }`}
+                            onClick={() => setActiveTab("mentor")}
+                            title="Mentor Mode"
+                        >
+                            <User className="size-5" />
+                        </button>
+                        <button
+                            className={`flex items-center justify-center p-2.5 rounded-md transition-colors ${
+                                activeTab === "university"
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            }`}
+                            onClick={() => setActiveTab("university")}
+                            title="University"
+                        >
+                            <School className="size-5" />
                         </button>
                     </div>
-                </SidebarFooter>
-            </Sidebar>
-        </SidebarProvider>
+                </div>
+
+                {/* Footer Icons */}
+                <div className="py-2 border-t border-sidebar-border">
+                    <div className="flex flex-col gap-1 px-2">
+                        <button
+                            className="flex items-center justify-center p-2.5 rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                            title="Notifications"
+                        >
+                            <Bell className="size-5" />
+                        </button>
+                        <button
+                            className="flex items-center justify-center p-2.5 rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                            title="Account"
+                        >
+                            <User className="size-5" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Secondary Sidebar Container - always rendered for smooth transition */}
+            <div className="relative flex h-full">
+                {/* Secondary Sidebar (Collapsible) */}
+                <div
+                    className="bg-sidebar border-r border-sidebar-border flex flex-col h-full overflow-hidden"
+                    style={{
+                        width: isSecondaryCollapsed ? 0 : 256,
+                        minWidth: isSecondaryCollapsed ? 0 : 256,
+                        transition: 'width 300ms ease-in-out, min-width 300ms ease-in-out',
+                    }}
+                >
+                    {/* Inner content wrapper with fixed width to prevent content squishing */}
+                    <div className="w-64 min-w-64 flex flex-col h-full">
+                        {/* Header with collapse button */}
+                        <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+                            <div className="text-sm font-semibold text-sidebar-foreground whitespace-nowrap">
+                                Event Chain Trader
+                            </div>
+                            <button
+                                onClick={() => setIsSecondaryCollapsed(true)}
+                                className="flex items-center justify-center p-1 rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                                aria-label="Collapse sidebar"
+                            >
+                                <ChevronLeft className="size-4" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto py-2">
+                            {/* Add Trade button at the top */}
+                            <div className="p-2">
+                                <button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 rounded-md font-medium text-sm transition-colors whitespace-nowrap">
+                                    + Add Trade
+                                </button>
+                            </div>
+                            
+                            {activeTab === "track" && (
+                                <nav className="flex flex-col gap-1 px-2">
+                                    {navMain.map((item) => (
+                                        <a
+                                            key={item.title}
+                                            href={item.url}
+                                            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors whitespace-nowrap ${
+                                                item.isActive
+                                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                            }`}
+                                        >
+                                            <item.icon className="size-4 shrink-0" />
+                                            <span>{item.title}</span>
+                                            {item.badge && (
+                                                <span className="ml-auto text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                                                    {item.badge}
+                                                </span>
+                                            )}
+                                        </a>
+                                    ))}
+                                </nav>
+                            )}
+                            {activeTab !== "track" && (
+                                <div className="px-4 py-2 text-sm text-sidebar-foreground/70 whitespace-nowrap">
+                                    Module not implemented yet.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Expand button - always rendered, visibility controlled by opacity */}
+                <div
+                    className="bg-sidebar border-r border-sidebar-border flex items-start h-full"
+                    style={{
+                        width: isSecondaryCollapsed ? 'auto' : 0,
+                        opacity: isSecondaryCollapsed ? 1 : 0,
+                        overflow: 'hidden',
+                        transition: 'opacity 300ms ease-in-out',
+                        pointerEvents: isSecondaryCollapsed ? 'auto' : 'none',
+                    }}
+                >
+                    <button
+                        onClick={() => setIsSecondaryCollapsed(false)}
+                        className="flex items-center justify-center p-2 m-1 rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                        aria-label="Expand sidebar"
+                    >
+                        <ChevronRight className="size-4" />
+                    </button>
+                </div>
+            </div>
+        </div>
     )
 }

@@ -15,7 +15,7 @@ export function ScoreProgress({ score }: ScoreProgressProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">Your Zella Score</span>
+        <span className="text-sm text-muted-foreground">Your Trading Score</span>
         <span className="text-2xl font-bold">{score.toFixed(2)}</span>
       </div>
       <div className="relative">

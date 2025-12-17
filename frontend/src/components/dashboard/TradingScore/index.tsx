@@ -4,32 +4,32 @@ import { RadarChart } from './RadarChart';
 import { ScoreProgress } from './ScoreProgress';
 import { RecentTradesTable } from './RecentTradesTable';
 import { TradeTimePerformance } from './TradeTimePerformance';
-import type { ZellaScore, Trade, Position, TradeTimePoint } from '@/types/dashboard';
+import type { TradingScore, Trade, Position, TradeTimePoint } from '@/types/dashboard';
 
-interface ZellaScorePanelProps {
-  zellaScore: ZellaScore;
+interface TradingScorePanelProps {
+  tradingScore: TradingScore;
   recentTrades: Trade[];
   openPositions: Position[];
   tradeTimeData: TradeTimePoint[];
 }
 
-export function ZellaScorePanel({
-  zellaScore,
+export function TradingScorePanel({
+  tradingScore,
   recentTrades,
   openPositions,
   tradeTimeData,
-}: ZellaScorePanelProps) {
+}: TradingScorePanelProps) {
   return (
     <div className="space-y-4">
-      {/* Zella Score Card */}
+      {/* Trading Score Card */}
       <Card className="p-4">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-sm font-medium">Zella score</span>
+          <span className="text-sm font-medium">Trading Score</span>
           <Info className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
-        <RadarChart metrics={zellaScore.metrics} />
+        <RadarChart metrics={tradingScore.metrics} />
         <div className="mt-4">
-          <ScoreProgress score={zellaScore.overall} />
+          <ScoreProgress score={tradingScore.overall} />
         </div>
       </Card>
 
@@ -48,5 +48,5 @@ export { RadarChart } from './RadarChart';
 export { ScoreProgress } from './ScoreProgress';
 export { RecentTradesTable } from './RecentTradesTable';
 export { TradeTimePerformance } from './TradeTimePerformance';
-export { ZellaScoreCard } from './ZellaScoreCard';
+export { TradingScoreCard } from './TradingScoreCard';
 export { TradesAndTimePanel } from './TradesAndTimePanel';

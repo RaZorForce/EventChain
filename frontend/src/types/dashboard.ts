@@ -1,7 +1,7 @@
 export interface DashboardData {
   lastImport: string;
   kpis: KPIMetrics;
-  zellaScore: ZellaScore;
+  tradingScore: TradingScore;
   recentTrades: Trade[];
   openPositions: Position[];
   cumulativePnL: CumulativePnLPoint[];
@@ -38,7 +38,7 @@ export interface KPIMetrics {
   };
 }
 
-export interface ZellaScoreMetrics {
+export interface TradingScoreMetrics {
   winRate: number;
   profitFactor: number;
   avgWinLoss: number;
@@ -47,9 +47,9 @@ export interface ZellaScoreMetrics {
   consistency: number;
 }
 
-export interface ZellaScore {
+export interface TradingScore {
   overall: number;
-  metrics: ZellaScoreMetrics;
+  metrics: TradingScoreMetrics;
 }
 
 export interface Trade {
