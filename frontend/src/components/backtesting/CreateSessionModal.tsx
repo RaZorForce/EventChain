@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+import { DateRangePickerInput } from '@/components/ui/date-range-picker';
 
 export interface SessionConfig {
   name: string;
@@ -222,52 +223,38 @@ export function CreateSessionModal({
             </Select>
           </div>
 
-          {/* Start Balance and Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start-balance">
-                Start balance<span className="text-destructive">*</span>
-              </Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
-                </span>
-                <Input
-                  id="start-balance"
-                  type="number"
-                  className="pl-7"
-                  value={startBalance}
-                  onChange={(e) => setStartBalance(e.target.value)}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Leverage is 1:1</p>
+          {/* Start Balance */}
+          <div className="space-y-2">
+            <Label htmlFor="start-balance">
+              Start balance<span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                $
+              </span>
+              <Input
+                id="start-balance"
+                type="number"
+                className="pl-7"
+                value={startBalance}
+                onChange={(e) => setStartBalance(e.target.value)}
+              />
             </div>
+            <p className="text-xs text-muted-foreground">Leverage is 1:1</p>
+          </div>
 
-            <div className="space-y-2">
-              <Label>
-                Date range<span className="text-destructive">*</span>
-              </Label>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-                <span className="text-muted-foreground">-</span>
-                <div className="relative flex-1">
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">Start time is 12 am US/Eastern</p>
-            </div>
+          {/* Date Range */}
+          <div className="space-y-2">
+            <Label>
+              Date range<span className="text-destructive">*</span>
+            </Label>
+            <DateRangePickerInput
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
+            <p className="text-xs text-muted-foreground">Start time is 12 am US/Eastern</p>
           </div>
         </div>
 

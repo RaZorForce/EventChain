@@ -17,7 +17,8 @@
       "Bash(npx shadcn@latest add:*)",
       "Bash(tree:*)",
       "Bash(npm run build:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm show:*)"
     ],
     "deny": [],
     "ask": []

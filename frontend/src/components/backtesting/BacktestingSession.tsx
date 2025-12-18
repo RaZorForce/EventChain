@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,36 +31,13 @@ import {
   Clock,
 } from 'lucide-react';
 import type { SessionConfig } from './CreateSessionModal';
+import { TradingViewChart, generateSampleCandleData } from './TradingViewChart';
+import type { CandlestickData, Time } from 'lightweight-charts';
 
 interface BacktestingSessionProps {
   session: SessionConfig & { id: string };
   onBack: () => void;
 }
-
-// Placeholder candlestick data
-const generateCandleData = () => {
-  const data = [];
-  let price = 36150;
-  const startTime = new Date('2023-12-05T20:00:00');
-
-  for (let i = 0; i < 100; i++) {
-    const open = price;
-    const change = (Math.random() - 0.5) * 20;
-    const high = open + Math.abs(change) + Math.random() * 10;
-    const low = open - Math.abs(change) - Math.random() * 10;
-    const close = open + change;
-    price = close;
-
-    data.push({
-      time: new Date(startTime.getTime() + i * 60000), // 1 min candles
-      open,
-      high,
-      low,
-      close,
-    });
-  }
-  return data;
-};
 
 export function BacktestingSession({ session, onBack }: BacktestingSessionProps) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -68,6 +45,7 @@ export function BacktestingSession({ session, onBack }: BacktestingSessionProps)
   const [timeframe, setTimeframe] = useState('1min');
   const [currentTime] = useState(new Date('2023-12-05T12:00:00'));
   const [selectedSymbol] = useState('US30');
+  const [crosshairPrice, setCrosshairPrice] = useState<number | null>(null);
 
   // Order panel state
   const [positionSize, setPositionSize] = useState('0');
@@ -75,8 +53,34 @@ export function BacktestingSession({ session, onBack }: BacktestingSessionProps)
   const [stopLoss, setStopLoss] = useState('0');
   const [advancedOrder, setAdvancedOrder] = useState(false);
 
-  const candleData = generateCandleData();
-  const currentPrice = candleData[candleData.length - 1]?.close || 36147.729;
+  // Generate chart data based on session date range
+  const candleData = useMemo<CandlestickData<Time>[]>(() => {
+    const startDate = session.dateRange.start
+      ? new Date(session.dateRange.start)
+      : new Date('2023-12-01');
+    const endDate = session.dateRange.end
+      ? new Date(session.dateRange.end)
+      : new Date('2023-12-31');
+
+    // Determine timeframe in minutes
+    const timeframeMinutes = {
+      '1min': 1,
+      '5min': 5,
+      '15min': 15,
+      '1h': 60,
+      '4h': 240,
+      '1d': 1440,
+    }[timeframe] || 1;
+
+    return generateSampleCandleData(startDate, endDate, timeframeMinutes, 100);
+  }, [session.dateRange.start, session.dateRange.end, timeframe]);
+
+  const currentPrice = candleData.length > 0 ? candleData[candleData.length - 1].close : 100;
+  const displayPrice = crosshairPrice ?? currentPrice;
+
+  const handleCrosshairMove = (_time: Time | null, price: number | null) => {
+    setCrosshairPrice(price);
+  };
 
   const togglePlayback = () => {
     setIsPlaying(!isPlaying);
@@ -186,43 +190,12 @@ export function BacktestingSession({ session, onBack }: BacktestingSessionProps)
             <span className="text-muted-foreground">···</span>
           </div>
 
-          {/* Chart Placeholder */}
+          {/* TradingView Chart */}
           <div className="flex-1 bg-[#131722] relative overflow-hidden">
-            {/* Price Scale */}
-            <div className="absolute right-0 top-0 bottom-16 w-24 flex flex-col justify-between py-4 text-xs text-muted-foreground">
-              {[36164, 36162, 36160, 36158, 36156, 36154, 36152, 36150, 36148, 36146, 36144, 36142, 36140, 36138, 36136, 36134].map((price) => (
-                <div key={price} className="text-right pr-2">
-                  {price.toFixed(6)}
-                </div>
-              ))}
-            </div>
-
-            {/* Candlestick Chart Placeholder */}
-            <div className="absolute inset-0 right-24 bottom-16 flex items-center justify-center">
-              <div className="text-center text-muted-foreground">
-                <BarChart3 className="size-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">TradingView Chart</p>
-                <p className="text-sm">Historical data for {session.name}</p>
-                <p className="text-xs mt-2">
-                  {session.dateRange.start} - {session.dateRange.end}
-                </p>
-              </div>
-            </div>
-
-            {/* Current Price Line */}
-            <div className="absolute right-24 left-0 top-1/2 border-t border-dashed border-primary/50" />
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-l">
-              {currentPrice.toFixed(6)}
-            </div>
-
-            {/* Time Scale */}
-            <div className="absolute bottom-0 left-0 right-24 h-16 flex items-center px-4 border-t border-muted/20">
-              <div className="flex justify-between w-full text-xs text-muted-foreground">
-                {['20:00', '20:15', '20:30', '20:45', '21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30', '22:45', '23:00', '23:15', '23:30', '23:45'].map((time) => (
-                  <span key={time}>{time}</span>
-                ))}
-              </div>
-            </div>
+            <TradingViewChart
+              data={candleData}
+              onCrosshairMove={handleCrosshairMove}
+            />
           </div>
 
           {/* Bottom Status Bar */}
@@ -288,7 +261,7 @@ export function BacktestingSession({ session, onBack }: BacktestingSessionProps)
               <Label className="text-muted-foreground text-xs">Market price</Label>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="px-2">USD</Badge>
-                <span className="font-mono">{currentPrice.toFixed(3)}</span>
+                <span className="font-mono">{displayPrice.toFixed(2)}</span>
               </div>
             </div>
 
