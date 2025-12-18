@@ -10,11 +10,24 @@ import {
     RotateCcw,
     Bell,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    List,
+    Library,
+    Globe
 } from "lucide-react"
 import React from "react";
 
-// Menu items for the secondary sidebar
+export type ActiveTab = "track" | "backtest" | "mentor" | "university";
+export type BacktestView = "sessions" | "dashboard" | "journal" | "trades" | "notebook" | "strategy" | "universe" | "reports";
+
+interface AppSidebarProps {
+    activeTab: ActiveTab;
+    onTabChange: (tab: ActiveTab) => void;
+    backtestView: BacktestView;
+    onBacktestViewChange: (view: BacktestView) => void;
+}
+
+// Menu items for the tracking (main) sidebar
 const navMain = [
     {
         title: "Dashboard",
@@ -44,11 +57,6 @@ const navMain = [
         badge: "NEW",
     },
     {
-        title: "Playbooks",
-        url: "#",
-        icon: BookOpen,
-    },
-    {
         title: "Progress Tracker",
         url: "#",
         icon: TrendingUp,
@@ -66,8 +74,51 @@ const navMain = [
     },
 ]
 
-export function AppSidebar() {
-    const [activeTab, setActiveTab] = React.useState("track")
+// Menu items for the backtesting sidebar
+const navBacktest: { title: string; icon: typeof List; view: BacktestView }[] = [
+    {
+        title: "Sessions",
+        icon: List,
+        view: "sessions",
+    },
+    {
+        title: "Dashboard",
+        icon: Home,
+        view: "dashboard",
+    },
+    {
+        title: "Daily Journal",
+        icon: BookOpen,
+        view: "journal",
+    },
+    {
+        title: "Trades",
+        icon: History,
+        view: "trades",
+    },
+    {
+        title: "Notebook",
+        icon: Pencil,
+        view: "notebook",
+    },
+    {
+        title: "Strategy",
+        icon: Library,
+        view: "strategy",
+    },
+    {
+        title: "Universe",
+        icon: Globe,
+        view: "universe",
+    },
+    {
+        title: "Reports",
+        icon: LineChart,
+        view: "reports",
+    },
+]
+
+export function AppSidebar({ activeTab, onTabChange, backtestView, onBacktestViewChange }: AppSidebarProps) {
     const [isSecondaryCollapsed, setIsSecondaryCollapsed] = React.useState(false)
 
     return (
@@ -90,7 +141,7 @@ export function AppSidebar() {
                                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                             }`}
-                            onClick={() => setActiveTab("track")}
+                            onClick={() => onTabChange("track")}
                             title="Tracking"
                         >
                             <Pencil className="size-5" />
@@ -101,7 +152,7 @@ export function AppSidebar() {
                                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                             }`}
-                            onClick={() => setActiveTab("backtest")}
+                            onClick={() => onTabChange("backtest")}
                             title="Backtesting"
                         >
                             <RotateCcw className="size-5" />
@@ -112,7 +163,7 @@ export function AppSidebar() {
                                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                             }`}
-                            onClick={() => setActiveTab("mentor")}
+                            onClick={() => onTabChange("mentor")}
                             title="Mentor Mode"
                         >
                             <User className="size-5" />
@@ -123,7 +174,7 @@ export function AppSidebar() {
                                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                             }`}
-                            onClick={() => setActiveTab("university")}
+                            onClick={() => onTabChange("university")}
                             title="University"
                         >
                             <School className="size-5" />
@@ -179,13 +230,14 @@ export function AppSidebar() {
 
                         {/* Content */}
                         <div className="flex-1 overflow-y-auto py-2">
-                            {/* Add Trade button at the top */}
+                            {/* Action button at the top - changes based on active tab */}
                             <div className="p-2">
                                 <button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 rounded-md font-medium text-sm transition-colors whitespace-nowrap">
-                                    + Add Trade
+                                    {activeTab === "backtest" ? "+ Create Session" : "+ Add Trade"}
                                 </button>
                             </div>
-                            
+
+                            {/* Tracking Navigation */}
                             {activeTab === "track" && (
                                 <nav className="flex flex-col gap-1 px-2">
                                     {navMain.map((item) => (
@@ -209,7 +261,29 @@ export function AppSidebar() {
                                     ))}
                                 </nav>
                             )}
-                            {activeTab !== "track" && (
+
+                            {/* Backtesting Navigation */}
+                            {activeTab === "backtest" && (
+                                <nav className="flex flex-col gap-1 px-2">
+                                    {navBacktest.map((item) => (
+                                        <button
+                                            key={item.title}
+                                            onClick={() => onBacktestViewChange(item.view)}
+                                            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors whitespace-nowrap text-left ${
+                                                backtestView === item.view
+                                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                            }`}
+                                        >
+                                            <item.icon className="size-4 shrink-0" />
+                                            <span>{item.title}</span>
+                                        </button>
+                                    ))}
+                                </nav>
+                            )}
+
+                            {/* Other tabs - not implemented */}
+                            {activeTab !== "track" && activeTab !== "backtest" && (
                                 <div className="px-4 py-2 text-sm text-sidebar-foreground/70 whitespace-nowrap">
                                     Module not implemented yet.
                                 </div>
