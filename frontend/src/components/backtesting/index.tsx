@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BacktestingHero } from './BacktestingHero';
 import { BacktestingFeatures } from './BacktestingFeatures';
-import { StrategyLibrary } from './StrategyLibrary';
+import { StrategyLibrary, templateStrategies, STRATEGY_STORAGE_KEY, type SavedStrategy } from './StrategyLibrary';
 import { UniverseManager } from './UniverseManager';
 import { CreateSessionModal, type SessionConfig } from './CreateSessionModal';
 import { BacktestingSession } from './BacktestingSession';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Play, Trash2, Calendar, DollarSign, BarChart3 } from 'lucide-react';
 
 // Dashboard Components (same as tracking dashboard)
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -19,18 +23,36 @@ import { mockDashboardData } from '@/lib/mock-data';
 // Import BacktestView type from sidebar
 import type { BacktestView } from '@/components/app-sidebar';
 
-// Mock strategies and universes for now
-const mockStrategies = [
-  { id: '1', name: 'Double Top Strategy' },
-  { id: '2', name: 'Morning Breakout' },
-  { id: '3', name: 'Gap Fill Strategy' },
-];
 
-const mockUniverses = [
-  { id: '1', name: 'Tech Large Cap' },
-  { id: '2', name: 'S&P 500 Leaders' },
-  { id: '3', name: 'High Volume Movers' },
-];
+// LocalStorage keys
+const UNIVERSE_STORAGE_KEY = 'eventchain-saved-universes';
+const SESSION_STORAGE_KEY = 'eventchain-saved-sessions';
+
+interface SavedUniverse {
+  id: string;
+  name: string;
+  description: string;
+  symbols: { ticker: string; name: string }[];
+  createdAt: string;
+  source?: 'scanner' | 'csv';
+}
+
+interface SavedSession {
+  id: string;
+  name: string;
+  description: string;
+  strategy: string | null;
+  strategyName?: string;
+  universe: string | null;
+  universeName?: string;
+  startBalance: number;
+  dateRange: {
+    start: string;
+    end: string;
+  };
+  createdAt: string;
+  status: 'active' | 'completed' | 'paused';
+}
 
 interface BacktestingPageProps {
   /** Which view to show */
@@ -46,6 +68,67 @@ export function BacktestingPage({ view = 'sessions' }: BacktestingPageProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
 
+  // Load saved universes from localStorage
+  const [savedUniverses, setSavedUniverses] = useState<{ id: string; name: string }[]>([]);
+
+  // Load saved strategies from localStorage
+  const [savedStrategies, setSavedStrategies] = useState<{ id: string; name: string }[]>([]);
+
+  // Load saved sessions from localStorage
+  const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
+
+  // Reload universes and strategies when modal opens or view changes
+  useEffect(() => {
+    const loadUniverses = () => {
+      try {
+        const stored = localStorage.getItem(UNIVERSE_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as SavedUniverse[];
+          setSavedUniverses(parsed.map(u => ({ id: u.id, name: u.name })));
+        }
+      } catch (error) {
+        console.error('Failed to load universes:', error);
+      }
+    };
+
+    const loadStrategies = () => {
+      try {
+        const stored = localStorage.getItem(STRATEGY_STORAGE_KEY);
+        const userStrategies: { id: string; name: string }[] = [];
+        if (stored) {
+          const parsed = JSON.parse(stored) as SavedStrategy[];
+          userStrategies.push(...parsed.map(s => ({ id: s.id, name: s.name })));
+        }
+        // Combine user strategies with template strategies
+        const allStrategies = [
+          ...userStrategies,
+          ...templateStrategies.map(t => ({ id: t.id, name: t.name })),
+        ];
+        setSavedStrategies(allStrategies);
+      } catch (error) {
+        console.error('Failed to load strategies:', error);
+        // Fall back to just template strategies
+        setSavedStrategies(templateStrategies.map(t => ({ id: t.id, name: t.name })));
+      }
+    };
+
+    const loadSessions = () => {
+      try {
+        const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as SavedSession[];
+          setSavedSessions(parsed);
+        }
+      } catch (error) {
+        console.error('Failed to load sessions:', error);
+      }
+    };
+
+    loadUniverses();
+    loadStrategies();
+    loadSessions();
+  }, [showCreateModal, view]);
+
   const handleWatchTutorial = () => {
     // TODO: Implement tutorial video modal or link
     console.log('Watch tutorial clicked');
@@ -56,15 +139,60 @@ export function BacktestingPage({ view = 'sessions' }: BacktestingPageProps) {
   };
 
   const handleSessionCreated = (config: SessionConfig) => {
+    const sessionId = `session-${Date.now()}`;
     const newSession: ActiveSession = {
       ...config,
-      id: `session-${Date.now()}`,
+      id: sessionId,
     };
+
+    // Find strategy and universe names for display
+    const strategyName = savedStrategies.find(s => s.id === config.strategy)?.name;
+    const universeName = savedUniverses.find(u => u.id === config.universe)?.name;
+
+    // Save to localStorage
+    const savedSession: SavedSession = {
+      id: sessionId,
+      name: config.name,
+      description: config.description,
+      strategy: config.strategy,
+      strategyName,
+      universe: config.universe,
+      universeName,
+      startBalance: config.startBalance,
+      dateRange: config.dateRange,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+    };
+
+    const existingSessions = [...savedSessions];
+    existingSessions.unshift(savedSession);
+    setSavedSessions(existingSessions);
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(existingSessions));
+
     setActiveSession(newSession);
   };
 
   const handleBackToSessions = () => {
     setActiveSession(null);
+  };
+
+  const handleResumeSession = (session: SavedSession) => {
+    const activeSession: ActiveSession = {
+      id: session.id,
+      name: session.name,
+      description: session.description,
+      strategy: session.strategy,
+      universe: session.universe,
+      startBalance: session.startBalance,
+      dateRange: session.dateRange,
+    };
+    setActiveSession(activeSession);
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    const updatedSessions = savedSessions.filter(s => s.id !== sessionId);
+    setSavedSessions(updatedSessions);
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(updatedSessions));
   };
 
   // If there's an active session, show the backtesting session view
@@ -79,6 +207,15 @@ export function BacktestingPage({ view = 'sessions' }: BacktestingPageProps) {
 
   // Sessions landing page (default)
   if (view === 'sessions') {
+    const formatDate = (dateStr: string | null) => {
+      if (!dateStr) return 'N/A';
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    };
+
     return (
       <>
         <div className="flex-1 flex flex-col min-h-screen overflow-auto">
@@ -88,7 +225,71 @@ export function BacktestingPage({ view = 'sessions' }: BacktestingPageProps) {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 flex flex-col bg-muted/20 p-6">
+          <div className="flex-1 flex flex-col bg-muted/20 p-6 gap-6">
+            {/* My Sessions Section */}
+            {savedSessions.length > 0 && (
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">My Sessions</h2>
+                  <Badge variant="secondary">{savedSessions.length} session{savedSessions.length !== 1 ? 's' : ''}</Badge>
+                </div>
+                <div className="divide-y">
+                  {savedSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className="py-4 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium truncate">{session.name}</h3>
+                          <Badge
+                            variant={session.status === 'active' ? 'default' : session.status === 'completed' ? 'secondary' : 'outline'}
+                            className="text-xs"
+                          >
+                            {session.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {session.strategyName && (
+                            <span className="flex items-center gap-1">
+                              <BarChart3 className="size-3" />
+                              {session.strategyName}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="size-3" />
+                            ${session.startBalance.toLocaleString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="size-3" />
+                            {formatDate(session.dateRange.start)} - {formatDate(session.dateRange.end)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleResumeSession(session)}
+                          className="gap-1"
+                        >
+                          <Play className="size-3" />
+                          Resume
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteSession(session.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {/* Hero Section */}
             <BacktestingHero
               onCreateSession={handleCreateSession}
@@ -105,8 +306,8 @@ export function BacktestingPage({ view = 'sessions' }: BacktestingPageProps) {
           open={showCreateModal}
           onOpenChange={setShowCreateModal}
           onCreateSession={handleSessionCreated}
-          strategies={mockStrategies}
-          universes={mockUniverses}
+          strategies={savedStrategies}
+          universes={savedUniverses}
         />
       </>
     );

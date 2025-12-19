@@ -18,7 +18,8 @@
       "Bash(tree:*)",
       "Bash(npm run build:*)",
       "Bash(git checkout:*)",
-      "Bash(npm show:*)"
+      "Bash(npm show:*)",
+      "Bash(uv sync:*)"
     ],
     "deny": [],
     "ask": []

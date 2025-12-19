@@ -223,38 +223,41 @@ export function CreateSessionModal({
             </Select>
           </div>
 
-          {/* Start Balance */}
-          <div className="space-y-2">
-            <Label htmlFor="start-balance">
-              Start balance<span className="text-destructive">*</span>
-            </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                $
-              </span>
-              <Input
-                id="start-balance"
-                type="number"
-                className="pl-7"
-                value={startBalance}
-                onChange={(e) => setStartBalance(e.target.value)}
-              />
+          {/* Start Balance and Date Range - Side by Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Start Balance */}
+            <div className="space-y-2">
+              <Label htmlFor="start-balance">
+                Start balance<span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  $
+                </span>
+                <Input
+                  id="start-balance"
+                  type="number"
+                  className="pl-7"
+                  value={startBalance}
+                  onChange={(e) => setStartBalance(e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Leverage is 1:1</p>
             </div>
-            <p className="text-xs text-muted-foreground">Leverage is 1:1</p>
-          </div>
 
-          {/* Date Range */}
-          <div className="space-y-2">
-            <Label>
-              Date range<span className="text-destructive">*</span>
-            </Label>
-            <DateRangePickerInput
-              startDate={startDate}
-              endDate={endDate}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
-            />
-            <p className="text-xs text-muted-foreground">Start time is 12 am US/Eastern</p>
+            {/* Date Range */}
+            <div className="space-y-2">
+              <Label>
+                Date range<span className="text-destructive">*</span>
+              </Label>
+              <DateRangePickerInput
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+              />
+              <p className="text-xs text-muted-foreground">Start time is 12 am US/Eastern</p>
+            </div>
           </div>
         </div>
 

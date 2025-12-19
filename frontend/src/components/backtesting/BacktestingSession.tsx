@@ -31,8 +31,8 @@ import {
   Clock,
 } from 'lucide-react';
 import type { SessionConfig } from './CreateSessionModal';
-import { TradingViewChart, generateSampleCandleData } from './TradingViewChart';
-import type { CandlestickData, Time } from 'lightweight-charts';
+import { TradingViewChart, generateSampleCandleData, type OHLCVData } from './TradingViewChart';
+import type { Time } from 'lightweight-charts';
 
 interface BacktestingSessionProps {
   session: SessionConfig & { id: string };
@@ -54,7 +54,7 @@ export function BacktestingSession({ session, onBack }: BacktestingSessionProps)
   const [advancedOrder, setAdvancedOrder] = useState(false);
 
   // Generate chart data based on session date range
-  const candleData = useMemo<CandlestickData<Time>[]>(() => {
+  const candleData = useMemo<OHLCVData[]>(() => {
     const startDate = session.dateRange.start
       ? new Date(session.dateRange.start)
       : new Date('2023-12-01');

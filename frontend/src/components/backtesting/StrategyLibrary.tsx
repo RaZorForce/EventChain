@@ -4,33 +4,56 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Settings, LayoutGrid, List, MoreVertical } from 'lucide-react';
 
-// Template strategy patterns (chart patterns)
-const templateStrategies = [
+// Template strategy patterns (chart patterns) - exported for use in session modal
+export const templateStrategies = [
   {
+    id: 'template-double-top',
     name: 'Double Top',
     description: 'Bearish reversal pattern with two peaks at similar price levels',
+    isTemplate: true,
   },
   {
+    id: 'template-double-bottom',
     name: 'Double Bottom',
     description: 'Bullish reversal pattern with two troughs at similar price levels',
+    isTemplate: true,
   },
   {
+    id: 'template-head-shoulders',
     name: 'Head and Shoulders',
     description: 'Bearish reversal pattern with three peaks, middle being highest',
+    isTemplate: true,
   },
   {
+    id: 'template-inverse-head-shoulders',
     name: 'Inverse Head and Shoulders',
     description: 'Bullish reversal pattern with three troughs, middle being lowest',
+    isTemplate: true,
   },
   {
+    id: 'template-cup-handle',
     name: 'Cup and Handle',
     description: 'Bullish continuation pattern resembling a cup with a handle',
+    isTemplate: true,
   },
   {
+    id: 'template-triangle',
     name: 'Triangle (Ascending/Descending)',
     description: 'Continuation or reversal pattern with converging trendlines',
+    isTemplate: true,
   },
 ];
+
+// LocalStorage key for saved strategies
+export const STRATEGY_STORAGE_KEY = 'eventchain-saved-strategies';
+
+export interface SavedStrategy {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  isTemplate?: boolean;
+}
 
 interface StrategyLibraryProps {
   onCreateStrategy?: () => void;
